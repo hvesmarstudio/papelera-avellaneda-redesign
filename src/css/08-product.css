@@ -79,3 +79,8 @@
   .buybox__actions .btn--lg { padding-inline: 1rem; min-width: 0; font-size: var(--fs-sm); }
   .buybox__actions .qty button { width: 40px; }
 }
+@media (max-width: 599px) {
+  .gallery__main { aspect-ratio: 4 / 5; }
+  .pdp { gap: var(--sp-4); }
+  .buybox { gap: var(--sp-4); }
+}
