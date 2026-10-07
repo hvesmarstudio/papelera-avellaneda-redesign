@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { home, catalog, product, shippingPage, faqPage, contactPage, termsPage, notFound } from './pages.mjs';
+import { home, catalog, product, shippingPage, faqPage, contactPage, termsPage, notFound, hubPage } from './pages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -19,12 +19,43 @@ const byHandle = Object.fromEntries(products.map((p) => [p.handle, p]));
 
 // Category tree with counts from actual membership
 const countOf = (slug) => products.filter((p) => p.categories.includes(slug)).length;
-const cats = data.categories.map((c) => ({ ...c, count: countOf(c.slug) }));
-const tree = cats.filter((c) => !c.parent).map((t) => ({ ...t, children: cats.filter((c) => c.parent === t.slug) }));
-const collections = data.collections.map((c) => ({ ...c, count: countOf(c.slug), children: [] }));
+// IA: empty categories are hidden; top categories and subcategories are ordered by
+// how many products they hold (largest first), so the deepest assortments lead.
+const cats = data.categories.map((c) => ({ ...c, count: countOf(c.slug) })).filter((c) => c.count > 0);
+const byCount = (a, b) => b.count - a.count;
+const tree = cats.filter((c) => !c.parent).sort(byCount).map((t) => ({ ...t, intent: site.intents?.[t.slug] || '', children: cats.filter((c) => c.parent === t.slug).sort(byCount) }));
+const collections = data.collections.map((c) => ({ ...c, count: countOf(c.slug), children: [] })).filter((c) => c.count > 0).sort(byCount);
 const catBySlug = {};
 tree.forEach((t) => { catBySlug[t.slug] = t; t.children.forEach((c) => (catBySlug[c.slug] = { ...c, children: [] })); });
 collections.forEach((c) => (catBySlug[c.slug] = c));
+
+// Navigation metadata per category/collection — all derived from real catalog data
+const byRank = products.slice().sort((a, b) => a.rank - b.rank);
+const nav = {};
+for (const slug of Object.keys(catBySlug)) {
+  const all = byRank.filter((p) => p.categories.includes(slug));
+  const avail = all.filter((p) => p.available && p.images.length);
+  const pick = (h) => h && byHandle[h] && byHandle[h].images.length ? byHandle[h] : null;
+  const thumbP = pick(site.nav_thumbs?.[slug]) || avail[0];
+  // featured: first on-sale product in store order, else the thumbnail product
+  // prefer items that live only in this top category (avoids e.g. napkins featured in "Deco")
+  const otherTops = data.categories.filter((c) => !c.parent && c.slug !== slug && c.slug !== (catBySlug[slug].parent || '')).map((c) => c.slug);
+  const own = (p) => !otherTops.some((t) => p.categories.includes(t));
+  // ...and prefer the category's largest subcategories, so the promo is representative
+  const mainSubs = cats.filter((c) => c.parent === slug).sort((a, b) => b.count - a.count).slice(0, 3).map((c) => c.slug);
+  const core = (p) => !mainSubs.length || mainSubs.some((s) => p.categories.includes(s));
+  const featured = avail.find((p) => p.compare_at_price && own(p) && core(p)) || avail.find((p) => p.compare_at_price && own(p)) || thumbP;
+  // mosaic: thumbnail product + next strongest distinct items in store order
+  const mosaic = [thumbP, ...avail.filter((p) => p !== thumbP)].filter(Boolean).slice(0, 3);
+  nav[slug] = {
+    thumb: `assets/img/nav/${slug}.webp`, count: all.length,
+    min: avail.length ? Math.min(...avail.map((p) => p.price)) : null,
+    sale: all.filter((p) => p.compare_at_price > p.price).length,
+    featured, mosaic, picks: avail.slice(0, 6),
+    description: site.category_descriptions?.[slug] || null,
+  };
+}
+const saleCountAll = products.filter((p) => p.compare_at_price > p.price).length; // matches the ?oferta=1 filter
 
 const fit = (im) => { const r = im.h / im.w; return r >= 1.2 && r <= 1.62 ? 'v' : 'c'; };
 function record(p) {
@@ -79,7 +110,7 @@ for (const f of fs.readdirSync(path.join(DIST, 'assets/js'))) {
 // Client catalog
 const subsOf = Object.fromEntries([...tree.map((t) => [t.slug, t.children.map((c) => c.slug)]), ['', tree.map((t) => t.slug)]]);
 const catalogJson = {
-  categories: [...cats, ...collections].map((c) => ({ slug: c.slug, name: c.name, parent: c.parent || null })),
+  categories: [...tree.flatMap((t) => [t, ...t.children]), ...collections].map((c) => ({ slug: c.slug, name: c.name, parent: c.parent || null, n: c.count, t: !!collections.find((x) => x.slug === c.slug) })),
   tops: tree.map((t) => t.slug), subsOf,
   items: products.map(record),
 };
@@ -87,7 +118,7 @@ fs.mkdirSync(path.join(DIST, 'data'), { recursive: true });
 fs.writeFileSync(path.join(DIST, 'data/catalog.json'), JSON.stringify(catalogJson));
 
 // Pages
-const baseCtx = { site, products, tree, collections, catBySlug, byHandle, record, fit, primaryCat, related, assetV };
+const baseCtx = { site, products, tree, collections, catBySlug, byHandle, record, fit, primaryCat, related, assetV, nav, saleCountAll };
 const write = (rel, html) => { const p = path.join(DIST, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, html); };
 const ctxAt = (depth) => {
   const root = depth === 'abs' ? new URL(site.base_url).pathname : '../'.repeat(depth);
@@ -101,6 +132,7 @@ for (const c of [...tree, ...tree.flatMap((t) => t.children.map((ch) => catBySlu
   write(`categorias/${c.slug}/index.html`, catalog(ctxAt(2), { type: isCol ? 'collection' : 'category', slug: c.slug, name: c.name, parent: c.parent, children: c.children || [], items: products.filter((p) => p.categories.includes(c.slug)) }));
 }
 for (const p of products) write(`productos/${p.handle}/index.html`, product(ctxAt(2), p));
+write('categorias/index.html', hubPage(ctxAt(1)));
 write('envios-y-devoluciones/index.html', shippingPage(ctxAt(1)));
 write('preguntas-frecuentes/index.html', faqPage(ctxAt(1)));
 write('contacto/index.html', contactPage(ctxAt(1)));
@@ -108,7 +140,7 @@ write('terminos-y-condiciones/index.html', termsPage(ctxAt(1), policies.terminos
 write('404.html', notFound(ctxAt('abs')));
 
 // sitemap (informational; pages are noindex)
-const urls = ['', 'productos/', ...Object.keys(catBySlug).map((s) => `categorias/${s}/`), ...products.map((p) => `productos/${p.handle}/`), 'envios-y-devoluciones/', 'preguntas-frecuentes/', 'contacto/', 'terminos-y-condiciones/'];
+const urls = ['', 'productos/', 'categorias/', ...Object.keys(catBySlug).map((s) => `categorias/${s}/`), ...products.map((p) => `productos/${p.handle}/`), 'envios-y-devoluciones/', 'preguntas-frecuentes/', 'contacto/', 'terminos-y-condiciones/'];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${site.base_url}${u}</loc></url>`).join('')}</urlset>`);
 write('robots.txt', 'User-agent: *\nDisallow: /\n');
 console.log(`Built ${products.length} products, ${Object.keys(catBySlug).length} category pages → dist/ (v${assetV})`);

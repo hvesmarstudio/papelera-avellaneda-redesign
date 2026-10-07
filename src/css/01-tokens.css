@@ -5,22 +5,22 @@
    ========================================================================== */
 :root {
   /* Color */
-  --c-paper: #f6f1ea;        /* page background — warm paper */
-  --c-paper-2: #efe8de;      /* image wells, subtle panels */
-  --c-surface: #fffdf9;      /* cards, drawers */
-  --c-ink: #1f1b17;          /* primary text, wordmark */
-  --c-ink-2: #4a433c;        /* secondary text */
-  --c-muted: #6f665d;        /* tertiary text (AA on paper) */
-  --c-line: #e3dacd;         /* hairlines */
-  --c-line-2: #d3c7b6;
+  --c-paper: #f5f2ee;        /* page background — warm paper */
+  --c-paper-2: #ece7e0;      /* image wells, subtle panels */
+  --c-surface: #fbfaf8;      /* cards, drawers */
+  --c-ink: #1d1a17;          /* primary text, wordmark */
+  --c-ink-2: #4b4540;        /* secondary text */
+  --c-muted: #6b645d;        /* tertiary text (AA on paper) */
+  --c-line: #e5dfd7;         /* hairlines */
+  --c-line-2: #d5cdc2;
   --c-accent: #b0362b;       /* "rojo Pelpa" — refined brand red (AA on paper) */
   --c-accent-ink: #8f2a21;
   --c-accent-soft: #f4dfd8;
   --c-sage: #5f6b4e;         /* success / in stock */
   --c-sage-soft: #e5e8dc;
   --c-gold: #a8864f;
-  --c-focus: #1f1b17;
-  --c-overlay: rgba(31, 27, 23, .42);
+  --c-focus: #1d1a17;
+  --c-overlay: rgba(29, 26, 23, .32);
 
   /* Type */
   --f-serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
@@ -31,12 +31,12 @@
   --fs-md: 1.125rem;
   --fs-lg: clamp(1.25rem, 1.1rem + .6vw, 1.5rem);
   --fs-xl: clamp(1.6rem, 1.3rem + 1.4vw, 2.25rem);
-  --fs-2xl: clamp(2rem, 1.5rem + 2.4vw, 3.25rem);
-  --fs-3xl: clamp(2.5rem, 1.6rem + 4vw, 4.75rem);
+  --fs-2xl: clamp(1.85rem, 1.4rem + 2vw, 2.9rem);
+  --fs-3xl: clamp(2.3rem, 1.5rem + 3.4vw, 4.25rem);
   --lh-tight: 1.08;
   --lh-snug: 1.25;
   --lh-body: 1.6;
-  --tracking-caps: .14em;
+  --tracking-caps: .16em;
 
   /* Space & layout */
   --sp-1: .25rem; --sp-2: .5rem; --sp-3: .75rem; --sp-4: 1rem; --sp-5: 1.5rem;
@@ -46,16 +46,19 @@
   --container: 1360px;
   --container-narrow: 820px;
   --header-h: 64px;
+  --header-h-slim: 56px;
   --announce-h: 34px;
 
   /* Shape & depth */
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 18px;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-input: 14px;
   --radius-pill: 999px;
   --shadow-sm: 0 1px 2px rgba(31,27,23,.06);
-  --shadow: 0 10px 30px -12px rgba(31,27,23,.18);
-  --shadow-lg: 0 30px 80px -20px rgba(31,27,23,.35);
+  --shadow: 0 12px 32px -16px rgba(29,26,23,.16);
+  --shadow-lg: 0 28px 70px -24px rgba(29,26,23,.28);
 
   /* Motion */
   --ease: cubic-bezier(.2, .7, .2, 1);
@@ -65,4 +68,6 @@
   /* Product imagery */
   --img-ratio: 5 / 7;
 }
-@media (min-width: 1024px) { :root { --header-h: 76px; } }
+@media (min-width: 1024px) { :root { --header-h: 80px; --header-h-slim: 62px; } }
+:root { --header-cur: var(--header-h); }
+html.is-slim { --header-cur: var(--header-h-slim); }

@@ -2,6 +2,8 @@
 // static build (Node) and the browser.
 const P = {
   menu: '<path d="M3 7h18M3 12h18M3 17h12"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4v-9.5Z"/>',
+  grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
   bag: '<path d="M5 8h14l-1 12.5H6L5 8Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/>',

@@ -1,105 +1,146 @@
 {
- "name": "La Pelpa!",
- "legal_name": "Papelera Avellaneda",
- "store_name": "Papelera avellaneda",
- "base_url": "https://hvesmarstudio.github.io/papelera-avellaneda-redesign/",
- "original_url": "https://papeleraavellaneda.com/",
- "tagline": "Papelería, deco y fiesta",
- "meta_description": "Comprá productos de papelería, deco y fiesta online: todo para la mesa, bolsas y embalaje, globos, guirnaldas y más. Envíos a todo el país y retiro en Av. Avellaneda 2871, CABA.",
- "announcements": [
-  "3 cuotas sin interés",
-  "Envíos a todo el país",
-  "Retiro en el local · CABA"
- ],
- "contact": {
-  "whatsapp": "541168523157",
-  "whatsapp_display": "11 6852-3157",
-  "phone": "1168523157",
-  "email": "lapapeleraavellaneda@hotmail.com",
-  "address": "Av. Avellaneda 2871",
-  "city": "Ciudad Autónoma de Buenos Aires",
-  "region": "CABA",
-  "country": "AR",
-  "hours": "Lunes a viernes de 10 a 17 h",
-  "pickup_hours": "Lunes a viernes de 10:30 a 17 h"
- },
- "social": {
-  "instagram": "https://instagram.com/la.pelpa",
-  "instagram_handle": "@la.pelpa",
-  "facebook": "https://www.facebook.com/papelera.avellanedaa/"
- },
- "payments": [
-  {
-   "id": "mercadopago",
-   "name": "Mercado Pago",
-   "detail": "Tarjetas de crédito y débito. Hasta 3 cuotas sin interés."
+  "name": "La Pelpa!",
+  "legal_name": "Papelera Avellaneda",
+  "store_name": "Papelera avellaneda",
+  "base_url": "https://hvesmarstudio.github.io/papelera-avellaneda-redesign/",
+  "original_url": "https://papeleraavellaneda.com/",
+  "tagline": "Papelería, deco y fiesta",
+  "meta_description": "Comprá productos de papelería, deco y fiesta online: todo para la mesa, bolsas y embalaje, globos, guirnaldas y más. Envíos a todo el país y retiro en Av. Avellaneda 2871, CABA.",
+  "announcements": [
+    "3 cuotas sin interés",
+    "Envíos a todo el país",
+    "Retiro en el local · CABA"
+  ],
+  "contact": {
+    "whatsapp": "541168523157",
+    "whatsapp_display": "11 6852-3157",
+    "phone": "1168523157",
+    "email": "lapapeleraavellaneda@hotmail.com",
+    "address": "Av. Avellaneda 2871",
+    "city": "Ciudad Autónoma de Buenos Aires",
+    "region": "CABA",
+    "country": "AR",
+    "hours": "Lunes a viernes de 10 a 17 h",
+    "pickup_hours": "Lunes a viernes de 10:30 a 17 h"
   },
-  {
-   "id": "transfer",
-   "name": "Transferencia o depósito bancario",
-   "detail": "Pagás desde tu home banking o billetera."
+  "social": {
+    "instagram": "https://instagram.com/la.pelpa",
+    "instagram_handle": "@la.pelpa",
+    "facebook": "https://www.facebook.com/papelera.avellanedaa/"
   },
-  {
-   "id": "cash",
-   "name": "Efectivo",
-   "detail": "Disponible como medio de pago en el checkout."
+  "payments": [
+    {
+      "id": "mercadopago",
+      "name": "Mercado Pago",
+      "detail": "Tarjetas de crédito y débito. Hasta 3 cuotas sin interés."
+    },
+    {
+      "id": "transfer",
+      "name": "Transferencia o depósito bancario",
+      "detail": "Pagás desde tu home banking o billetera."
+    },
+    {
+      "id": "cash",
+      "name": "Efectivo",
+      "detail": "Disponible como medio de pago en el checkout."
+    }
+  ],
+  "installments_no_interest": 3,
+  "free_shipping_threshold": null,
+  "shipping": [
+    {
+      "id": "correo",
+      "title": "Envío estándar · Correo Argentino",
+      "eta": "Hasta 10 días hábiles",
+      "text": "A domicilio o a cualquier sucursal de Correo Argentino, a todo el país. Te enviamos un código de seguimiento para que sigas tu pedido."
+    },
+    {
+      "id": "moto",
+      "title": "Moto CABA",
+      "eta": "2 a 5 días hábiles",
+      "text": "Una vez acreditado el pedido, el servicio de mensajería se comunica al teléfono que dejaste en la compra."
+    },
+    {
+      "id": "flash",
+      "title": "Moto Flash CABA",
+      "eta": "Al día siguiente",
+      "text": "Tu pedido sale al día siguiente; la mensajería se comunica antes para confirmar el envío."
+    },
+    {
+      "id": "pickup",
+      "title": "Retiro estándar en el local",
+      "eta": "2 a 5 días hábiles",
+      "text": "Te avisamos cuando tu pedido está listo. Retiro en Av. Avellaneda 2871, CABA, de lunes a viernes de 10:30 a 17 h."
+    },
+    {
+      "id": "pickup-flash",
+      "title": "Retiro flash",
+      "eta": "Al día siguiente",
+      "text": "Tu pedido queda listo para retirar al día siguiente; nos comunicamos para confirmarte el horario."
+    }
+  ],
+  "returns_days": 30,
+  "covers": {
+    "bolsas-y-embalaje": "sobre-estrellas-metal-x5-1tz7o",
+    "todo-para-la-mesa": "platos-rayas-beige-x5-11hxw",
+    "deco-y-fiesta": "deco-panal-rosa-vgf6x",
+    "navidad": "papel-de-regalo-navidad-muneco-nieve-dhjia",
+    "globos": "globo-corazon-cuadrille-rosa-1eqlw",
+    "para-regalos": "bolsas-verde-musgo-x25",
+    "cuadernos-y-anotadores": "mini-resaltador-stabilo-3c4ny",
+    "bonetes": "bonete-tela-cuadrille-beige-zhx1h",
+    "animalitos-de-felpa": "animales-de-felpa-tigres-con-bonete-1q7cj",
+    "margaritas": "bonete-kraft-margarita",
+    "pelpa-basicos": "sobres-zigzag-plata-x25-4xky1"
+  },
+  "hero": [
+    "bonete-tela-cuadrille-beige-zhx1h",
+    "deco-panal-rosa-vgf6x",
+    "servilletas-rayas-ondas-x10-1k2ux"
+  ],
+  "concept_credit": {
+    "name": "Hvesmar Studio",
+    "note": "Concepto de rediseño no oficial, creado por Hvesmar Studio como propuesta para Papelera Avellaneda. Los precios y el stock se tomaron del sitio actual el 7/10/2026 y pueden no estar actualizados."
+  },
+  "nav_thumbs": {
+    "bolsas-y-embalaje": "sobre-rayas-diagonal-metal-oro-x25-ppl92",
+    "hilos-cintas-tarjetas-y-stickers": "cinta-hearts-oro-2ghsg",
+    "cajas": "cajas-fosforera-acetato-w31g4",
+    "bolsas-sobres-y-papeles": "sobres-con-base-zigzag-1af29",
+    "todo-para-la-mesa": "servilleta-scallop-azul-x10-1sxc4",
+    "sorbetes-de-polipapel": "sorbete-flores-pintadas-x10-1wi4k",
+    "platos": "plato-scallop-iris-aqua-1t1uk",
+    "vasos": "vasos-cuadrille-verde-x5-1ow96",
+    "servilletas": "servilletas-rayas-ondas-x10-1k2ux",
+    "cubiertos": "tenedores-de-bambu-raya-naranja-x12-gejuz",
+    "contenedores-y-pinchos": "pinchos-cuadrille-rojo-x6-1vvhr",
+    "deco-y-fiesta": "deco-panal-rosa-vgf6x",
+    "guirnaldas-de-flecos": "guirnalda-de-flecos-circus-verde-hs0yc",
+    "globos": "globo-corazon-cuadrille-rosa-1eqlw",
+    "luces-y-sparklers": "chispitas-sparklers-numero",
+    "confetti-y-cortinas": "mini-confetti-mix-blossom",
+    "fanales-y-panales": "fanal-chino-cuadrille-verde-xqod3",
+    "rosetas-y-pompas": "set-rosetas-rojas-x2-uhu2z",
+    "banderines-y-guirnaldas": "banderin-happy-birthday-colors-2svo1",
+    "blondas": "blonda-corazon-10cm",
+    "deco-torta-y-pirotines": "torre-cupcakes-circo-15mi5",
+    "eco-friendly-party": "bandejas-kraft-x10",
+    "navidad": "cinta-velvet-en-carretel-de-madera-t68mr",
+    "para-regalos": "bolsas-verde-musgo-x25",
+    "cuadernos-y-anotadores": "cuadernos-candy1",
+    "bonetes": "bonete-cuadrille-marron-nbhtm",
+    "animalitos-de-felpa": "animales-de-felpa-tigres-con-bonete-1q7cj",
+    "margaritas": "servilletas-margaritas-x10-69nkn",
+    "pelpa-basicos": "sobres-zigzag-plata-x25-4xky1"
+  },
+  "category_descriptions": {
+    "navidad": "Guirnaldas, globos, cintas y más para vestir tu hogar en Navidad."
+  },
+  "category_descriptions_source": "Texto tomado de la meta descripción de cada categoría en papeleraavellaneda.com (solo las que tienen texto propio).",
+  "intents": {
+    "deco-y-fiesta": "Para decorar y festejar",
+    "todo-para-la-mesa": "Para poner la mesa",
+    "bolsas-y-embalaje": "Para envolver y regalar",
+    "navidad": "De temporada"
   }
- ],
- "installments_no_interest": 3,
- "free_shipping_threshold": null,
- "shipping": [
-  {
-   "id": "correo",
-   "title": "Envío estándar · Correo Argentino",
-   "eta": "Hasta 10 días hábiles",
-   "text": "A domicilio o a cualquier sucursal de Correo Argentino, a todo el país. Te enviamos un código de seguimiento para que sigas tu pedido."
-  },
-  {
-   "id": "moto",
-   "title": "Moto CABA",
-   "eta": "2 a 5 días hábiles",
-   "text": "Una vez acreditado el pedido, el servicio de mensajería se comunica al teléfono que dejaste en la compra."
-  },
-  {
-   "id": "flash",
-   "title": "Moto Flash CABA",
-   "eta": "Al día siguiente",
-   "text": "Tu pedido sale al día siguiente; la mensajería se comunica antes para confirmar el envío."
-  },
-  {
-   "id": "pickup",
-   "title": "Retiro estándar en el local",
-   "eta": "2 a 5 días hábiles",
-   "text": "Te avisamos cuando tu pedido está listo. Retiro en Av. Avellaneda 2871, CABA, de lunes a viernes de 10:30 a 17 h."
-  },
-  {
-   "id": "pickup-flash",
-   "title": "Retiro flash",
-   "eta": "Al día siguiente",
-   "text": "Tu pedido queda listo para retirar al día siguiente; nos comunicamos para confirmarte el horario."
-  }
- ],
- "returns_days": 30,
- "covers": {
-  "bolsas-y-embalaje": "sobre-estrellas-metal-x5-1tz7o",
-  "todo-para-la-mesa": "platos-rayas-beige-x5-11hxw",
-  "deco-y-fiesta": "deco-panal-rosa-vgf6x",
-  "navidad": "papel-de-regalo-navidad-muneco-nieve-dhjia",
-  "globos": "globo-corazon-cuadrille-rosa-1eqlw",
-  "para-regalos": "bolsas-verde-musgo-x25",
-  "cuadernos-y-anotadores": "mini-resaltador-stabilo-3c4ny",
-  "bonetes": "bonete-tela-cuadrille-beige-zhx1h",
-  "animalitos-de-felpa": "animales-de-felpa-tigres-con-bonete-1q7cj",
-  "margaritas": "bonete-kraft-margarita",
-  "pelpa-basicos": "sobres-zigzag-plata-x25-4xky1"
- },
- "hero": [
-  "bonete-tela-cuadrille-beige-zhx1h",
-  "deco-panal-rosa-vgf6x",
-  "servilletas-rayas-ondas-x10-1k2ux"
- ],
- "concept_credit": {
-  "name": "Hvesmar Studio",
-  "note": "Concepto de rediseño no oficial, creado por Hvesmar Studio como propuesta para Papelera Avellaneda. Los precios y el stock se tomaron del sitio actual el 7/10/2026 y pueden no estar actualizados."
- }
 }

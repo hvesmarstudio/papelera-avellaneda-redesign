@@ -12,7 +12,9 @@ export function openLayer(el, opener) {
   requestAnimationFrame(() => el.classList.add('is-open'));
   el.setAttribute('aria-hidden', 'false');
   stack.push(el);
+  document.documentElement.classList.add('is-locked');
   document.body.classList.add('is-locked');
+  el.dispatchEvent(new CustomEvent('layer:open'));
   setTimeout(() => {
     const target = el.querySelector('[data-autofocus]') || el.querySelector(FOCUSABLE);
     target?.focus({ preventScroll: true });
@@ -24,16 +26,16 @@ export function closeLayer(el) {
   el.classList.remove('is-open');
   el.setAttribute('aria-hidden', 'true');
   const i = stack.indexOf(el); if (i > -1) stack.splice(i, 1);
-  if (!stack.length) document.body.classList.remove('is-locked');
+  if (!stack.length) { document.body.classList.remove('is-locked'); document.documentElement.classList.remove('is-locked'); }
   el.dispatchEvent(new CustomEvent('layer:close'));
   const op = el._opener; if (op && document.contains(op)) op.focus({ preventScroll: true });
 }
 document.addEventListener('keydown', (e) => {
   const top = stack[stack.length - 1];
   if (!top) return;
-  if (e.key === 'Escape') { e.preventDefault(); closeLayer(top); }
+  if (e.key === 'Escape') { e.preventDefault(); if (!(top._onEsc && top._onEsc())) closeLayer(top); }
   if (e.key === 'Tab') {
-    const f = [...top.querySelectorAll(FOCUSABLE)].filter((n) => n.offsetParent !== null || n === document.activeElement);
+    const f = [...top.querySelectorAll(FOCUSABLE)].filter((n) => !n.closest('[inert]') && n.tabIndex !== -1 && (n.offsetParent !== null || n === document.activeElement));
     if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -42,7 +44,7 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('click', (e) => {
   const c = e.target.closest('[data-close]');
-  if (c) { e.preventDefault(); closeLayer(c.closest('.drawer, .modal, .search')); }
+  if (c) { e.preventDefault(); closeLayer(c.closest('.drawer, .modal, .search, .msheet')); }
 });
 
 let toastTimer;
@@ -67,34 +69,6 @@ export function initAccordions(scope = document) {
       panel.classList.toggle('is-open', !open);
     });
   });
-}
-
-export function initHeader() {
-  const header = document.querySelector('.site-header');
-  if (header) {
-    const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 8);
-    onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
-  }
-  // Mega menu (desktop): hover with intent + click/keyboard toggle
-  document.querySelectorAll('.nav-item[data-mega]').forEach((item) => {
-    const btn = item.querySelector('.nav-link');
-    let t;
-    const open = () => { clearTimeout(t); document.querySelectorAll('.nav-item.is-open').forEach((o) => o !== item && close(o)); item.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); };
-    const close = (it = item) => { it.classList.remove('is-open'); it.querySelector('.nav-link').setAttribute('aria-expanded', 'false'); };
-    item.addEventListener('mouseenter', () => { t = setTimeout(open, 80); });
-    item.addEventListener('mouseleave', () => { clearTimeout(t); t = setTimeout(() => close(), 160); });
-    btn.addEventListener('click', () => (item.classList.contains('is-open') ? close() : open()));
-    item.addEventListener('keydown', (e) => { if (e.key === 'Escape') { close(); btn.focus(); } });
-    item.addEventListener('focusout', (e) => { if (!item.contains(e.relatedTarget)) close(); });
-  });
-  // Mobile menu
-  const menu = document.getElementById('menu');
-  document.querySelectorAll('[data-open-menu]').forEach((b) => b.addEventListener('click', () => openLayer(menu, b)));
-  menu?.querySelectorAll('.mnav__toggle').forEach((b) => b.addEventListener('click', () => {
-    const exp = b.getAttribute('aria-expanded') === 'true';
-    b.setAttribute('aria-expanded', String(!exp));
-    document.getElementById(b.getAttribute('aria-controls')).hidden = exp;
-  }));
 }
 
 export function initAnnouncements() {

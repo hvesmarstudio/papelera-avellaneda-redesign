@@ -1,10 +1,5 @@
 /* Page header & breadcrumbs */
 .page-head { padding-block: clamp(1.5rem, 1rem + 2vw, 3rem) clamp(1.25rem, 1rem + 1.5vw, 2.25rem); }
-.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; list-style: none; font-size: var(--fs-xs); color: var(--c-muted); margin-bottom: var(--sp-4); }
-.crumbs a { text-decoration: none; }
-.crumbs a:hover { color: var(--c-ink); text-decoration: underline; }
-.crumbs li + li::before { content: "/"; margin-right: .35rem; opacity: .5; }
-.crumbs [aria-current] { color: var(--c-ink-2); }
 .page-head__title { font-family: var(--f-serif); font-size: var(--fs-2xl); line-height: 1.08; letter-spacing: -.015em; }
 .page-head__meta { margin-top: .6rem; color: var(--c-muted); font-size: var(--fs-sm); }
 .page-head .subcats { margin-top: var(--sp-5); }

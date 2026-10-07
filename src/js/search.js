@@ -1,4 +1,5 @@
-// Instant search overlay (client-side, accent-insensitive)
+// Instant search overlay (client-side, accent-insensitive): matching categories
+// (with counts) first, then products. Idle state shows suggested searches.
 import { getCatalog } from './catalog-data.js';
 import { money, norm, esc } from './format.js';
 import { openLayer } from './ui.js';
@@ -22,26 +23,62 @@ export function rank(items, q) {
   return out.sort((a, b) => b[0] - a[0] || a[1].r - b[1].r).map((x) => x[1]);
 }
 
+// Highlight matched terms in a (plain) label
+function mark(label, q) {
+  const terms = norm(q).split(' ').filter((t) => t.length > 1);
+  if (!terms.length) return esc(label);
+  const n = norm(label);
+  const hits = new Array(label.length).fill(false);
+  // norm() keeps length for Latin text (accents stripped 1:1), so indexes line up
+  if (n.length === label.length) terms.forEach((t) => { let i = n.indexOf(t); while (i > -1) { for (let k = i; k < i + t.length; k++) hits[k] = true; i = n.indexOf(t, i + 1); } });
+  let out = '', open = false;
+  for (let i = 0; i < label.length; i++) {
+    if (hits[i] && !open) { out += '<mark>'; open = true; }
+    if (!hits[i] && open) { out += '</mark>'; open = false; }
+    out += esc(label[i]);
+  }
+  return out + (open ? '</mark>' : '');
+}
+
 export function initSearch() {
   const el = document.getElementById('search');
   if (!el) return;
   const input = el.querySelector('input[type="search"]');
-  const results = el.querySelector('[data-search-results]');
-  const idle = el.querySelector('[data-search-idle]');
-  const more = el.querySelector('[data-search-more]');
-  document.querySelectorAll('[data-open-search]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); openLayer(el, b); getCatalog(); }));
+  const q$ = (s) => el.querySelector(s);
+  const results = q$('[data-search-results]'), idle = q$('[data-search-idle]'), more = q$('[data-search-more]');
+  const catsWrap = q$('[data-search-cats-wrap]'), cats = q$('[data-search-cats]'), prodsWrap = q$('[data-search-prods-wrap]');
+  const prodsLabel = q$('[data-search-prods-label]'), empty = q$('[data-search-empty]'), clear = q$('[data-search-clear]');
+  let hydrated = false;
+  document.querySelectorAll('[data-open-search]').forEach((b) => b.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!hydrated) { el.querySelectorAll('img[data-src]').forEach((im) => { im.src = im.dataset.src; im.removeAttribute('data-src'); }); hydrated = true; }
+    openLayer(el, b); getCatalog();
+  }));
+  clear.addEventListener('click', () => { input.value = ''; run(); input.focus(); });
   let t;
-  input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(run, 110); });
+  input.addEventListener('input', () => { clear.hidden = !input.value; clearTimeout(t); t = setTimeout(run, 90); });
   async function run() {
     const q = input.value.trim();
-    if (!q) { results.innerHTML = ''; idle.hidden = false; more.hidden = true; return; }
-    const { items } = await getCatalog();
-    const hits = rank(items, q);
+    if (!q) { idle.hidden = false; catsWrap.hidden = prodsWrap.hidden = empty.hidden = more.hidden = true; return; }
+    const data = await getCatalog();
+    const nq = norm(q);
+    const terms = nq.split(' ').filter(Boolean);
+    const catHits = data.categories.filter((c) => c.n > 0 && terms.every((tm) => norm(c.name).includes(tm)))
+      .sort((a, b) => (norm(b.name).startsWith(nq) - norm(a.name).startsWith(nq)) || b.n - a.n).slice(0, 4);
+    const hits = rank(data.items, q);
     idle.hidden = true;
-    if (!hits.length) { results.innerHTML = `<li class="search__empty">No encontramos productos para “${esc(q)}”. Probá con otra palabra o explorá las categorías.</li>`; more.hidden = true; return; }
-    results.innerHTML = hits.slice(0, 8).map((p) => `<li><a class="search-hit" href="${root}productos/${p.h}/">${p.m?.[0] ? `<img src="${root}assets/img/products/${p.m[0]}-480.webp" alt="" width="56" height="72" loading="lazy">` : ''}<span><span class="search-hit__name">${esc(p.n)}</span><span class="search-hit__price">${p.x > p.p ? 'Desde ' : ''}${money(p.p)}${p.a ? '' : ' · Sin stock'}</span></span></a></li>`).join('');
-    more.hidden = false;
+    catsWrap.hidden = !catHits.length;
+    cats.innerHTML = catHits.map((c) => {
+      const parent = c.parent ? data.catNames[c.parent] : (c.t ? 'Colección' : 'Categoría');
+      return `<li><a class="search-cat" href="${root}categorias/${c.slug}/"><img src="${root}assets/img/nav/${c.slug}.webp" alt="" width="56" height="56" loading="lazy"><span><span class="search-cat__name">${mark(c.name, q)}</span><span class="search-cat__n">${esc(parent)} · ${c.n.toLocaleString('es-AR')} productos</span></span></a></li>`;
+    }).join('');
+    prodsWrap.hidden = !hits.length;
+    prodsLabel.textContent = `Productos · ${hits.length.toLocaleString('es-AR')}`;
+    results.innerHTML = hits.slice(0, 8).map((p) => `<li><a class="search-hit" href="${root}productos/${p.h}/">${p.m?.[0] ? `<img src="${root}assets/img/products/${p.m[0]}-480.webp" alt="" width="56" height="72" loading="lazy">` : '<span class="search-hit__ph"></span>'}<span><span class="search-hit__name">${mark(p.n, q)}</span><span class="search-hit__price">${p.x > p.p ? 'Desde ' : ''}${money(p.p)}${p.c > p.p ? ` <s>${money(p.c)}</s>` : ''}${p.a ? '' : ' · Sin stock'}</span></span></a></li>`).join('');
+    empty.hidden = !!(hits.length || catHits.length);
+    empty.textContent = `No encontramos resultados para “${q}”. Probá con otra palabra o explorá las categorías.`;
+    more.hidden = !hits.length;
     more.href = `${root}productos/?q=${encodeURIComponent(q)}`;
-    more.textContent = `Ver los ${hits.length} resultados`;
+    more.textContent = `Ver los ${hits.length.toLocaleString('es-AR')} productos`;
   }
 }

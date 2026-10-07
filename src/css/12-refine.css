@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Refinement layer — calm, airy minimalism (soft neutrals, understated type,
+   pill controls, consistent rounded corners). Brand red only as an accent.
+   ========================================================================== */
+h1, h2, h3, .display, .h2, .h3, .h4 { font-weight: 350; }
+.display { font-weight: 330; letter-spacing: -.025em; }
+.display em, .h2 em, .h3 em { color: inherit; font-weight: 300; }
+.eyebrow { font-size: 11px; letter-spacing: var(--tracking-caps); }
+.eyebrow::before { display: none; }
+.lead { color: var(--c-ink-2); }
+
+/* Primary actions in ink; red stays for sale prices, badges and "Ofertas" */
+.btn--accent { --btn-bg: var(--c-ink); --btn-bd: var(--c-ink); --btn-fg: var(--c-paper); }
+.btn--accent:hover { --btn-bg: #000; --btn-bd: #000; }
+.btn { letter-spacing: .03em; }
+.btn--ghost { --btn-bd: var(--c-line-2); }
+
+/* Inputs: rounded, soft */
+.input, .select { border-radius: var(--radius-input); border-color: var(--c-line-2); }
+input[type="email"].input, input[type="search"].input, .newsletter__form .input { border-radius: var(--radius-pill); padding-inline: 1.25rem; }
+textarea.input { border-radius: var(--radius); }
+.chip { min-height: 40px; border-color: var(--c-line-2); background: var(--c-surface); }
+@media (pointer: coarse) { .chip { min-height: 44px; } }
+
+/* Drawers & dialogs: rounded inner edges, iOS safe areas */
+.drawer--right .drawer__panel { border-radius: var(--radius-xl) 0 0 var(--radius-xl); }
+.drawer--left .drawer__panel { border-radius: 0 var(--radius-xl) var(--radius-xl) 0; }
+.drawer__panel { padding-top: env(safe-area-inset-top); overflow: hidden; background: var(--c-surface); }
+.drawer__head { border-bottom-color: var(--c-line); }
+.modal__card { border-radius: var(--radius-xl); }
+.search__panel { border-radius: 0 0 var(--radius-xl) var(--radius-xl); padding-top: env(safe-area-inset-top); }
+
+/* Cards: softer image wells, calmer labels */
+.card__media { border-radius: var(--radius-lg); background: var(--c-paper-2); }
+.card__cat { font-size: 10.5px; letter-spacing: .14em; font-weight: 500; }
+.card__title { font-weight: 450; }
+.card__quick { box-shadow: 0 6px 16px -8px rgba(29,26,23,.35); }
+.badge { border-radius: var(--radius-pill); letter-spacing: .08em; }
+
+/* Section rhythm: more air */
+.section-head { margin-bottom: clamp(2rem, 1.25rem + 2vw, 3.25rem); }
+
+/* Search overlay */
+.search__form { gap: .6rem; }
+.search__input { font-family: var(--f-sans); font-size: clamp(1.05rem, .95rem + .8vw, 1.5rem); font-weight: 400; }
+.search__clear { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--c-paper-2); color: var(--c-ink); flex: none; }
+.search__clear svg { width: 16px; height: 16px; color: var(--c-ink) !important; }
+.search__cancel { flex: none; min-height: 44px; padding: 0 .9rem; border: 0; border-radius: var(--radius-pill); background: none; font-size: var(--fs-sm); font-weight: 600; }
+.search__cancel:hover { background: var(--c-paper); }
+.search__body { padding-block: var(--sp-4) var(--sp-6); }
+.search__label { margin: var(--sp-5) 0 var(--sp-3); font-size: 11px; font-weight: 600; letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--c-muted); }
+.search__body > :first-child .search__label:first-child, .search__group:first-of-type .search__label { margin-top: var(--sp-2); }
+.search__suggest .chip svg { width: 14px; height: 14px; color: var(--c-muted); }
+.search__tops, .search__cats { list-style: none; display: grid; grid-template-columns: 1fr; gap: .4rem; }
+@media (min-width: 768px) { .search__tops, .search__cats { grid-template-columns: repeat(3, 1fr); gap: .5rem 1rem; } }
+.search-cat { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: .85rem; min-height: 64px; padding: .4rem; border-radius: var(--radius); text-decoration: none; transition: background .2s; }
+.search-cat:hover, .search-cat:focus-visible { background: var(--c-paper); }
+.search-cat img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: var(--c-paper-2); }
+.search-cat__name { display: block; font-size: var(--fs-sm); font-weight: 500; }
+.search-cat__n { display: block; font-size: 12px; color: var(--c-muted); }
+.search-hit img, .search-hit__ph { border-radius: 12px; }
+.search-hit__ph { width: 56px; height: 72px; background: var(--c-paper-2); flex: none; }
+.search-hit__price s { color: var(--c-muted); margin-left: .25rem; }
+.search mark { background: none; color: inherit; font-weight: 700; }
+.search__empty { margin-top: var(--sp-4); color: var(--c-muted); }
+.search__more { margin-top: var(--sp-5); }
+@media (max-width: 767px) { .search__panel { max-height: 100dvh; height: 100dvh; border-radius: 0; } }
+
+/* Product gallery: thumbs column + main image; single-image products span full width */
+@media (min-width: 960px) {
+  .gallery { top: calc(var(--header-cur) + 1.5rem); }
+  .gallery__thumbs { grid-column: 1; grid-row: 1; }
+  .gallery__wrap { grid-column: 2; grid-row: 1; min-width: 0; }
+  .gallery:not(:has(.gallery__thumbs)) .gallery__wrap { grid-column: 1 / -1; }
+}
+.buybox { top: calc(var(--header-cur) + 1.5rem); }

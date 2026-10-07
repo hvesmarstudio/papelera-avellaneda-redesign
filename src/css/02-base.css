@@ -7,7 +7,7 @@ body {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility; overflow-x: hidden;
 }
-body.is-locked { overflow: hidden; }
+html.is-locked, body.is-locked { overflow: hidden; }
 img, svg, video { display: block; max-width: 100%; }
 img { height: auto; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: .2em; }

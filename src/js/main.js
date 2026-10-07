@@ -1,10 +1,11 @@
 // Entry point
-import { initHeader, initAnnouncements, initReveal, initAccordions, initCardHover, openLayer, toast } from './ui.js';
+import { initAnnouncements, initReveal, initAccordions, initCardHover, openLayer, toast } from './ui.js';
 import { initCart, addToCart } from './cart-drawer.js';
 import { initSearch } from './search.js';
+import { initNav } from './nav.js';
 
 document.documentElement.classList.remove('no-js');
-initHeader();
+initNav();
 initAnnouncements();
 initReveal();
 initAccordions();

@@ -2,7 +2,7 @@
 import { icon } from '../src/js/icons.js';
 import { esc, money, installment, pct } from '../src/js/format.js';
 import { renderCard } from '../src/js/card.js';
-import { layout, crumbs } from './components.mjs';
+import { layout, crumbs, catRail } from './components.mjs';
 import { faqs } from './content.mjs';
 
 const img = (root, key, w = 960) => `${root}assets/img/products/${key}-${w}.webp`;
@@ -69,7 +69,10 @@ export function home(ctx) {
     <div class="cats">
       ${tree.map((t, i) => { const p = cover(t.slug); return `<a class="cat-tile reveal" style="transition-delay:${i * 0.06}s" href="${c(t.slug)}"><img src="${img(root, p.images[0].key, 960)}" srcset="${img(root, p.images[0].key, 480)} 480w, ${img(root, p.images[0].key, 960)} 960w" sizes="(min-width: 1024px) 24vw, 48vw" alt="" loading="lazy" decoding="async" width="960" height="1280"><span class="cat-tile__body"><span><span class="cat-tile__name">${esc(t.name)}</span><span class="cat-tile__count">${t.count} productos</span></span><span class="cat-tile__arrow">${icon('arrowRight')}</span></span></a>`; }).join('')}
     </div>
-    <nav class="subcats" aria-label="Subcategorías">${allSubs.map((s) => `<a class="chip" href="${c(s.slug)}">${esc(s.name)} <span class="chip__count">${s.count}</span></a>`).join('')}</nav>
+    <div class="home-subcats reveal">
+      <div class="home-subcats__head"><p class="eyebrow eyebrow--plain">Explorá por tipo de producto</p><p class="home-subcats__meta">${allSubs.length} subcategorías</p></div>
+      ${catRail(ctx, allSubs.map((s) => ({ href: c(s.slug), name: s.name, count: ctx.nav[s.slug].count, thumb: ctx.nav[s.slug].thumb })), { label: 'Subcategorías', grid: true })}
+    </div>
   </div>
 </section>
 
@@ -169,19 +172,30 @@ export function catalog(ctx, scope) {
   const first = items.slice(0, 24);
   const n = items.length;
   const parent = scope.parent ? ctx.catBySlug[scope.parent] : null;
-  const crumbItems = [{ name: 'Inicio', href: root }, { name: 'Productos', href: `${root}productos/` }];
-  if (parent) crumbItems.push({ name: parent.name, href: c(parent.slug) });
-  if (scope.type !== 'all') crumbItems.push({ name: scope.name });
-  else crumbItems[1] = { name: 'Productos' };
+  // Breadcrumb: the current level doubles as a switcher to its siblings (with counts)
+  const sib = (list) => list.map((x) => ({ name: x.name, href: c(x.slug), count: x.count, current: x.slug === scope.slug }));
+  const crumbItems = [{ name: 'Inicio', href: root }];
+  if (scope.type === 'all') crumbItems.push({ name: 'Todos los productos' });
+  else {
+    crumbItems.push({ name: 'Categorías', href: `${root}categorias/` });
+    if (parent) crumbItems.push({ name: parent.name, href: c(parent.slug) });
+    crumbItems.push({ name: scope.name, siblings: sib(parent ? parent.children : scope.type === 'collection' ? collections : tree) });
+  }
 
-  // Subcategory chips for navigation
-  const navSubs = scope.type === 'all' ? tree : (scope.children?.length ? scope.children : parent ? parent.children : []);
-  const chipsNav = navSubs.length ? `<nav class="subcats" aria-label="Subcategorías">${parent || scope.type === 'all' ? '' : `<a class="chip" aria-current="page" href="${c(scope.slug)}">Todo</a>`}${parent ? `<a class="chip" href="${c(parent.slug)}">Todo ${esc(parent.name.toLowerCase())}</a>` : ''}${navSubs.map((s) => `<a class="chip" href="${c(s.slug)}"${s.slug === scope.slug ? ' aria-current="page"' : ''}>${esc(s.name)} <span class="chip__count">${s.count}</span></a>`).join('')}</nav>` : '';
+  // Visual subcategory rail (real thumbnails); "Ver todo" never repeats the category name
+  const nav = ctx.nav;
+  const ri = (cat, extra = {}) => ({ href: c(cat.slug), name: cat.name, count: nav[cat.slug].count, thumb: nav[cat.slug].thumb, current: cat.slug === scope.slug, ...extra });
+  let railItems, railLabel;
+  if (scope.type === 'all') { railItems = [...tree, ...collections].map((t) => ri(t)); railLabel = 'Categorías y colecciones'; }
+  else if (scope.children?.length) { railItems = [ri(scope, { name: 'Ver todo', current: true }), ...scope.children.map((s) => ri(s))]; railLabel = `Subcategorías de ${scope.name}`; }
+  else if (parent) { railItems = [ri(parent, { name: 'Ver todo', current: false }), ...parent.children.map((s) => ri(s))]; railLabel = `Subcategorías de ${parent.name}`; }
+  else { railItems = [{ href: `${root}productos/`, name: 'Todos los productos', count: ctx.products.length }, ...[...tree, ...collections].filter((t) => t.slug !== scope.slug).map((t) => ri(t))]; railLabel = 'Explorá también'; }
+  const chipsNav = `<div class="cathead__rail"><p class="cathead__rail-label">${scope.children?.length || parent ? 'Subcategorías' : scope.type === 'all' ? 'Comprá por categoría' : 'Explorá también'}</p>${catRail(ctx, railItems, { label: railLabel, eager: true })}</div>`;
 
   // Filter checkboxes: subcategories inside this scope (or top categories on "all")
   const subOptions = scope.type === 'all' ? [...tree, ...collections] : (scope.children || []);
   const count = (pred) => items.filter(pred).length;
-  const saleCount = count((p) => p.compare_at_price && p.available);
+  const saleCount = count((p) => p.compare_at_price > p.price);
   const prices = [[null, 5000, 'Hasta $5.000'], [5000, 15000, '$5.000 – $15.000'], [15000, 30000, '$15.000 – $30.000'], [30000, null, 'Más de $30.000']];
   const tree2 = `<ul class="filters__list">${tree.map((t) => `<li><a class="filters__cat" href="${c(t.slug)}"${t.slug === scope.slug || t.slug === scope.parent ? ' aria-current="page"' : ''}>${esc(t.name)} <span class="check__count">${t.count}</span></a>${(t.slug === scope.slug || t.slug === scope.parent) && t.children.length ? `<ul class="filters__list">${t.children.map((s) => `<li><a class="filters__cat" href="${c(s.slug)}"${s.slug === scope.slug ? ' aria-current="page"' : ''}>${esc(s.name)} <span class="check__count">${s.count}</span></a></li>`).join('')}</ul>` : ''}</li>`).join('')}<li><a class="filters__cat" href="${root}productos/"${scope.type === 'all' ? ' aria-current="page"' : ''}>Todos los productos <span class="check__count">${ctx.products.length}</span></a></li></ul>`;
   const filters = `<div id="filters" class="filters">
@@ -198,33 +212,65 @@ export function catalog(ctx, scope) {
   </div>`;
 
   const title = scope.type === 'all' ? 'Todos los productos' : scope.name;
+  const avail = items.filter((p) => p.available);
+  const minP = avail.length ? Math.min(...avail.map((p) => p.price)) : null;
+  const saleN = saleCount;
+  const kicker = scope.type === 'all' ? 'Tienda' : scope.type === 'collection' ? 'Colección' : parent ? parent.name : 'Categoría';
+  // Only real copy: the store's own category text when it exists, otherwise a factual line
+  const desc = scope.type === 'all' ? `${esc(site.tagline)}: el catálogo completo de La Pelpa!, en ${tree.length} categorías y ${collections.length} colecciones.`
+    : nav[scope.slug].description ? esc(nav[scope.slug].description)
+    : parent ? `Parte de <a href="${c(parent.slug)}">${esc(parent.name)}</a>.`
+    : scope.children?.length ? `${scope.children.length} subcategorías para elegir.` : '';
+  const mosaic = scope.type === 'all' ? tree.slice(0, 3).map((t) => nav[t.slug].mosaic[0]).filter(Boolean) : nav[scope.slug].mosaic;
   const label = (p) => {
     const subs = scope.type === 'all' ? tree.map((t) => t.slug) : (scope.children || []).map((s) => s.slug);
     const k = p.categories.find((s) => subs.includes(s)) || p.categories.find((s) => s !== scope.slug);
     return k ? ctx.catBySlug[k].name : '';
   };
   const body = `
-<div class="container page-head">
-  ${crumbs(crumbItems)}
-  <h1 class="page-head__title" data-page-title>${esc(title)}</h1>
-  <p class="page-head__meta"><span data-count>${n.toLocaleString('es-AR')} productos</span>${scope.type === 'collection' ? ' · Colección' : ''}</p>
-  ${chipsNav}
-</div>
+<section class="cathead">
+  <div class="container">
+    ${crumbs(crumbItems)}
+    <div class="cathead__grid${mosaic.length ? '' : ' cathead__grid--solo'}">
+      <div class="cathead__copy">
+        <p class="eyebrow">${esc(kicker)}</p>
+        <div class="cathead__titlerow">
+          <h1 class="cathead__title" data-page-title>${esc(title)}</h1>
+          ${mosaic[0] ? `<span class="cathead__thumb" aria-hidden="true"><img src="${root}${scope.type === 'all' ? `assets/img/nav/${tree[0].slug}.webp` : nav[scope.slug].thumb}" alt="" width="120" height="120"></span>` : ''}
+        </div>
+        ${desc ? `<p class="cathead__desc">${desc}</p>` : ''}
+        <ul class="cathead__stats">
+          <li><strong data-count>${n.toLocaleString('es-AR')} productos</strong></li>
+          ${minP ? `<li>Desde <strong>${money(minP)}</strong></li>` : ''}
+          ${saleN ? `<li><a href="?oferta=1" data-quick-link="sale"><strong>${saleN}</strong> en oferta</a></li>` : ''}
+          <li>${site.installments_no_interest} cuotas sin interés</li>
+        </ul>
+      </div>
+      ${mosaic.length ? `<div class="cathead__art" aria-hidden="true">${mosaic.map((m, i) => `<span class="cathead__tile cathead__tile--${i}"><img src="${img(root, m.images[0].key, i ? 480 : 960)}" alt="" width="${i ? 480 : 960}" height="${i ? 672 : 1344}" ${i ? 'loading="lazy" ' : 'fetchpriority="high" '}decoding="async"></span>`).join('')}</div>` : ''}
+    </div>
+    ${chipsNav}
+  </div>
+</section>
 <div class="container catalog" data-catalog data-scope-type="${scope.type === 'collection' ? 'category' : scope.type}" data-scope="${scope.slug || ''}">
   <aside class="catalog__aside" aria-label="Filtros">${filters}</aside>
   <div>
-    <div class="toolbar">
+    <div class="toolbar" data-toolbar>
       <p class="toolbar__count" data-count aria-live="polite">${n.toLocaleString('es-AR')} productos</p>
       <div class="toolbar__right">
-        <button type="button" class="btn btn--ghost toolbar__filter-btn" data-open-filters aria-controls="filters-drawer">${icon('sliders')}Filtrar</button>
-        <label class="sort-label" for="sort">Ordenar</label>
-        <select class="select" id="sort" name="orden" aria-label="Ordenar productos">
+        <button type="button" class="tchip tchip--filter" data-open-filters aria-controls="filters-drawer">${icon('sliders')}Filtrar<span class="tchip__badge" data-filter-badge hidden>0</span></button>
+        <label class="tchip tchip--sort"><span class="sort-label">Ordenar</span><select class="tchip__select" id="sort" name="orden" aria-label="Ordenar productos">
           <option value="destacados">Destacados</option>
           <option value="precio-asc">Menor precio</option>
           <option value="precio-desc">Mayor precio</option>
           <option value="az">Nombre A–Z</option>
           <option value="za">Nombre Z–A</option>
-        </select>
+        </select>${icon('chevronDown')}</label>
+        ${scope.children?.length
+          // Parent category: in-place subcategory filter chips with counts (sticky on mobile)
+          ? `<span class="toolbar__div" aria-hidden="true"></span><span class="toolbar__subs" role="group" aria-label="Filtrar por subcategoría">${scope.children.map((s) => `<button type="button" class="tchip tchip--sub" data-sub-chip="${s.slug}" aria-pressed="false">${esc(s.name)} <span class="tchip__n">${s.count}</span></button>`).join('')}</span>`
+          : `${saleCount ? `<button type="button" class="tchip tchip--quick" data-quick="sale" aria-pressed="false">${icon('sparkle')}En oferta <span class="tchip__n">${saleCount}</span></button>` : ''}
+        <button type="button" class="tchip tchip--quick" data-quick="stock" aria-pressed="false">Con stock</button>
+        <button type="button" class="tchip tchip--quick" data-quick="p5000" aria-pressed="false">Hasta $5.000</button>`}
       </div>
     </div>
     <div class="active-filters" data-active></div>
@@ -250,7 +296,7 @@ export function catalog(ctx, scope) {
   const jsonld = [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbItems.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, ...(it.href ? { item: ctx.abs(it.href) } : {}) })) }];
   return layout(ctx, {
     title, description: scope.type === 'all' ? `Todos los productos de La Pelpa!: ${n} artículos de papelería, deco y fiesta.` : `${scope.name}: ${n} productos en La Pelpa! · Papelera Avellaneda. Envíos a todo el país y retiro en CABA.`,
-    canonical: site.base_url + path, page: 'catalog', current: scope.parent || scope.slug, body, after, jsonld,
+    canonical: site.base_url + path, page: 'catalog', current: scope.parent || scope.slug, here: scope.slug, body, after, jsonld,
   });
 }
 
@@ -355,7 +401,7 @@ ${related.length ? `<section class="section section--surface" aria-labelledby="r
       ? { '@type': 'AggregateOffer', priceCurrency: 'ARS', lowPrice: p.price, highPrice: p.price_max, offerCount: p.variants.length, availability: p.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }
       : { '@type': 'Offer', priceCurrency: 'ARS', price: v0.price, availability: v0.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', url },
   }, { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbItems.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, ...(it.href ? { item: ctx.abs(it.href) } : {}) })) }];
-  return layout(ctx, { title: p.display_name, description: descText, canonical: url, image: ogImg, jsonld, page: 'product', current: primary?.parent || primary?.slug, body });
+  return layout(ctx, { title: p.display_name, description: descText, canonical: url, image: ogImg, jsonld, page: 'product', current: primary?.parent || primary?.slug, here: primary?.slug, body });
 }
 
 /* --------------------------------------------------------- CONTENT PAGES */
@@ -464,4 +510,53 @@ export function notFound(ctx) {
   const { root } = ctx;
   const body = `<div class="container container--narrow empty" style="min-height:50vh">${icon('search')}<p class="eyebrow eyebrow--plain">Error 404</p><h1 class="h2">No encontramos esta página</h1><p class="muted">Puede que el enlace haya cambiado. Buscá lo que necesitás o volvé al inicio.</p><div class="hero__ctas" style="justify-content:center"><a class="btn" href="${root}">Ir al inicio</a><a class="btn btn--ghost" href="${root}productos/">Ver productos</a></div></div>`;
   return layout(ctx, { title: 'Página no encontrada', canonical: ctx.site.base_url, page: '404', body });
+}
+
+/* ------------------------------------------------------- CATEGORIES HUB */
+// All categories at a glance, grouped by shopping intent (one intent per top category),
+// each with visual subcategory cards and real counts.
+export function hubPage(ctx) {
+  const { root, site, tree, collections, nav, products } = ctx;
+  const c = (slug) => `${root}categorias/${slug}/`;
+  const nSubs = tree.reduce((a, t) => a + t.children.length, 0);
+  const cc = (cat, extra = {}) => ({ href: c(cat.slug), name: cat.name, count: nav[cat.slug].count, thumb: nav[cat.slug].thumb, ...extra });
+  const section = (t, i) => {
+    const n = nav[t.slug];
+    return `<section class="hub__sec reveal" aria-labelledby="hub-${t.slug}">
+      <div class="hub__head">
+        <a class="hub__cover" href="${c(t.slug)}" tabindex="-1" aria-hidden="true">${n.mosaic[0] ? `<img src="${img(root, n.mosaic[0].images[0].key, 480)}" alt="" width="480" height="672" ${i ? 'loading="lazy" ' : ''}decoding="async">` : ''}</a>
+        <div class="hub__intro">
+          ${t.intent ? `<p class="eyebrow">${esc(t.intent)}</p>` : ''}
+          <h2 class="hub__title" id="hub-${t.slug}"><a href="${c(t.slug)}">${esc(t.name)}</a></h2>
+          <p class="hub__meta">${n.count.toLocaleString('es-AR')} productos${t.children.length ? ` · ${t.children.length} subcategorías` : ''}${n.min ? ` · desde ${money(n.min)}` : ''}</p>
+          ${n.description ? `<p class="hub__desc">${esc(n.description)}</p>` : ''}
+          <a class="btn btn--ghost btn--sm" href="${c(t.slug)}">Ver todo ${icon('arrowRight')}</a>
+        </div>
+      </div>
+      ${t.children.length ? catRail(ctx, t.children.map((s) => cc(s)), { label: `Subcategorías de ${t.name}`, grid: true }) : `<div class="hub__picks">${n.picks.slice(0, 4).map((p) => card(ctx, p)).join('')}</div>`}
+    </section>`;
+  };
+  const body = `
+<section class="cathead cathead--hub">
+  <div class="container">
+    ${crumbs([{ name: 'Inicio', href: root }, { name: 'Categorías' }])}
+    <p class="eyebrow">Tienda</p>
+    <h1 class="cathead__title">Todas las categorías</h1>
+    <p class="cathead__desc">${tree.length} categorías, ${nSubs} subcategorías y ${collections.length} colecciones para encontrar rápido lo que buscás.</p>
+    <ul class="cathead__stats">
+      <li><strong>${products.length.toLocaleString('es-AR')}</strong> productos</li>
+      ${ctx.saleCountAll ? `<li><a href="${root}productos/?oferta=1"><strong>${ctx.saleCountAll}</strong> en oferta</a></li>` : ''}
+      <li>${site.installments_no_interest} cuotas sin interés</li>
+    </ul>
+    <nav class="hub__jump" aria-label="Ir a">${tree.map((t) => `<a class="chip" href="#hub-${t.slug}">${esc(t.name)} <span class="chip__count">${nav[t.slug].count}</span></a>`).join('')}<a class="chip" href="#hub-colecciones">Colecciones <span class="chip__count">${collections.length}</span></a></nav>
+  </div>
+</section>
+<div class="container hub">
+  ${tree.map(section).join('')}
+  <section class="hub__sec reveal" aria-labelledby="hub-colecciones">
+    <div class="hub__intro hub__intro--solo"><p class="eyebrow">Selecciones de La Pelpa!</p><h2 class="hub__title" id="hub-colecciones">Colecciones</h2><p class="hub__meta">${collections.length} colecciones</p></div>
+    ${catRail(ctx, collections.map((s) => cc(s)), { label: 'Colecciones', grid: true })}
+  </section>
+</div>`;
+  return layout(ctx, { title: 'Todas las categorías', description: `Todas las categorías de La Pelpa!: ${tree.map((t) => t.name.toLowerCase()).join(', ')} y colecciones.`, canonical: `${site.base_url}categorias/`, page: 'hub', current: '', body });
 }

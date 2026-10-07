@@ -63,6 +63,12 @@ export async function initCatalog() {
     const sa = filters.querySelector('input[name="sale"]'); if (sa) sa.checked = state.sale;
     if (sortSel) sortSel.value = state.sort;
     filters.querySelectorAll('[data-preset]').forEach((b) => b.classList.toggle('is-active', String(state.min ?? '') === (b.dataset.min || '') && String(state.max ?? '') === (b.dataset.max || '')));
+    // Mobile quick chips + active-filter badge
+    const on = { sale: state.sale, stock: state.stock, p5000: state.min == null && state.max === 5000 };
+    document.querySelectorAll('[data-quick]').forEach((b) => b.setAttribute('aria-pressed', String(!!on[b.dataset.quick])));
+    document.querySelectorAll('[data-sub-chip]').forEach((b) => b.setAttribute('aria-pressed', String(state.sub.includes(b.dataset.subChip))));
+    const nActive = state.sub.length + (state.min != null || state.max != null ? 1 : 0) + (state.stock ? 1 : 0) + (state.sale ? 1 : 0);
+    document.querySelectorAll('[data-filter-badge]').forEach((el) => { el.hidden = !nActive; el.textContent = nActive; });
   }
 
   function compute() {
@@ -154,6 +160,24 @@ export async function initCatalog() {
     state.max = same || !b.dataset.max ? null : Number(b.dataset.max);
     update();
   });
+  document.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.quick;
+    if (k === 'sale') state.sale = !state.sale;
+    if (k === 'stock') state.stock = !state.stock;
+    if (k === 'p5000') { const was = state.min == null && state.max === 5000; state.min = null; state.max = was ? null : 5000; }
+    update();
+  }));
+  document.querySelectorAll('[data-sub-chip]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.subChip;
+    state.sub = state.sub.includes(k) ? state.sub.filter((x) => x !== k) : [...state.sub, k];
+    update();
+    // keep results in view after filtering from the sticky bar
+    const bar = document.querySelector('[data-toolbar]');
+    if (bar && bar.getBoundingClientRect().top <= parseFloat(getComputedStyle(bar).top) + 1) {
+      const y = grid.getBoundingClientRect().top + scrollY - bar.offsetHeight - parseFloat(getComputedStyle(bar).top) - 12;
+      scrollTo({ top: y });
+    }
+  }));
   sortSel?.addEventListener('change', () => { state.sort = sortSel.value; update(); });
   active.addEventListener('click', (e) => {
     const b = e.target.closest('[data-chip]');
@@ -176,4 +200,18 @@ export async function initCatalog() {
 
   // Initial: pre-rendered markup matches the default state; re-render only if needed
   if (hadParams) render(); else { list = compute(); syncControls(); }
+
+  // Back/forward from a product: restore "ver más" depth and scroll position
+  const KEY = 'pelpa:cat:' + location.pathname;
+  const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify({ shown: state.shown, y: scrollY, qs: location.search })); } catch {} };
+  addEventListener('pagehide', save);
+  grid.addEventListener('click', (e) => { if (e.target.closest('a')) save(); });
+  const navEntry = performance.getEntriesByType?.('navigation')?.[0];
+  if (navEntry?.type === 'back_forward') {
+    let saved = null; try { saved = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch {}
+    if (saved && saved.qs === location.search) {
+      if (saved.shown > PAGE) { state.shown = saved.shown; render(); }
+      requestAnimationFrame(() => scrollTo({ top: saved.y, behavior: 'instant' }));
+    }
+  }
 }
