@@ -1,0 +1,13 @@
+{
+  "name": "papelera-avellaneda-redesign",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Concept redesign of papeleraavellaneda.com (La Pelpa!) by Hvesmar Studio",
+  "type": "module",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "serve": "npx --yes serve dist -l 8080",
+    "dev": "node build/build.mjs && npx --yes serve dist -l 8080"
+  },
+  "engines": { "node": ">=18" }
+}
