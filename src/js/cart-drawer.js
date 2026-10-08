@@ -53,7 +53,7 @@ export function initCart() {
         const left = Math.max(0, t - sub);
         shipEl.innerHTML = `${icon('truck')}<div style="flex:1">${left > 0 ? `Te faltan <strong>${money(left)}</strong> para el envío gratis` : '<strong>¡Tenés envío gratis!</strong>'}<div class="cart__ship-bar"><span style="width:${Math.min(100, (sub / t) * 100)}%"></span></div></div>`;
       } else {
-        shipEl.innerHTML = `${icon('truck')}<span>Envíos a todo el país por Correo Argentino · Moto en CABA · Retiro en el local.</span>`;
+        shipEl.innerHTML = `${icon('truck')}<span>Envíos a todo el país · Moto en CABA · Retiro en el local</span>`;
       }
     }
   }
@@ -82,7 +82,7 @@ export function initCart() {
   checkoutBtn?.addEventListener('click', () => {
     const modal = document.getElementById('checkout-modal');
     const sum = modal.querySelector('[data-checkout-summary]');
-    sum.textContent = `${cart.count} ${cart.count === 1 ? 'producto' : 'productos'} · Subtotal ${money(cart.subtotal)}`;
+    sum.textContent = `Subtotal ${money(cart.subtotal)}`;
     const wa = modal.querySelector('[data-checkout-wa]');
     if (wa && cfg.whatsapp) {
       const lines = cart.items.map((i) => `• ${i.qty} × ${i.n}${i.vl ? ` (${i.vl})` : ''} — ${money(i.p * i.qty)}`);
@@ -102,5 +102,5 @@ export function addToCart(line, qty = 1, { open = true } = {}) {
   cart.add(line, qty);
   document.querySelectorAll('[data-cart-badge]').forEach((b) => { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); });
   if (open) openCart();
-  else toast(`Agregaste ${line.n} al carrito`);
+  else toast(`Listo, ${line.n} ya está en tu carrito`);
 }

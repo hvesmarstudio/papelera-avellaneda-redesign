@@ -1,5 +1,5 @@
 // Instant search overlay (client-side, accent-insensitive): matching categories
-// (with counts) first, then products. Idle state shows suggested searches.
+// first, then products. Idle state shows suggested searches.
 import { getCatalog } from './catalog-data.js';
 import { money, norm, esc } from './format.js';
 import { openLayer } from './ui.js';
@@ -70,15 +70,14 @@ export function initSearch() {
     catsWrap.hidden = !catHits.length;
     cats.innerHTML = catHits.map((c) => {
       const parent = c.parent ? data.catNames[c.parent] : (c.t ? 'Colección' : 'Categoría');
-      return `<li><a class="search-cat" href="${root}categorias/${c.slug}/"><img src="${root}assets/img/nav/${c.slug}.webp" alt="" width="56" height="56" loading="lazy"><span><span class="search-cat__name">${mark(c.name, q)}</span><span class="search-cat__n">${esc(parent)} · ${c.n.toLocaleString('es-AR')} productos</span></span></a></li>`;
+      return `<li><a class="search-cat" href="${root}categorias/${c.slug}/"><img src="${root}assets/img/nav/${c.slug}.webp" alt="" width="56" height="56" loading="lazy"><span><span class="search-cat__name">${mark(c.name, q)}</span><span class="search-cat__n">${esc(parent)}</span></span></a></li>`;
     }).join('');
     prodsWrap.hidden = !hits.length;
-    prodsLabel.textContent = `Productos · ${hits.length.toLocaleString('es-AR')}`;
     results.innerHTML = hits.slice(0, 8).map((p) => `<li><a class="search-hit" href="${root}productos/${p.h}/">${p.m?.[0] ? `<img src="${root}assets/img/products/${p.m[0]}-480.webp" alt="" width="56" height="72" loading="lazy">` : '<span class="search-hit__ph"></span>'}<span><span class="search-hit__name">${mark(p.n, q)}</span><span class="search-hit__price">${p.x > p.p ? 'Desde ' : ''}${money(p.p)}${p.c > p.p ? ` <s>${money(p.c)}</s>` : ''}${p.a ? '' : ' · Sin stock'}</span></span></a></li>`).join('');
     empty.hidden = !!(hits.length || catHits.length);
-    empty.textContent = `No encontramos resultados para “${q}”. Probá con otra palabra o explorá las categorías.`;
+    empty.textContent = `Nada por acá con “${q}”. Probá con otra palabra.`;
     more.hidden = !hits.length;
     more.href = `${root}productos/?q=${encodeURIComponent(q)}`;
-    more.textContent = `Ver los ${hits.length.toLocaleString('es-AR')} productos`;
+    more.textContent = 'Ver todos los resultados';
   }
 }

@@ -327,3 +327,17 @@ html.is-slim .logo__sub { opacity: 0; max-height: 0; margin-top: 0; }
 .catalog { grid-template-columns: minmax(0, 1fr); }
 .catalog > * { min-width: 0; }
 @media (min-width: 1024px) { .catalog { grid-template-columns: 250px minmax(0, 1fr); } }
+
+/* Round 3: count-free nav items */
+.mcat { grid-template-columns: 64px minmax(0, 1fr) 32px; min-height: 80px; }
+.mcat__img { width: 64px; height: 64px; }
+.mcat__name { min-width: 0; }
+.mega__sub { grid-template-columns: 48px 1fr; }
+.mega__sub img { width: 48px; height: 48px; }
+.mega__sub-price { display: block; font-size: 12px; color: var(--c-muted); }
+.mega__tab { min-height: 56px; }
+.msub { grid-template-rows: auto; align-items: center; }
+.msub__name { align-self: center; }
+.msub__img { grid-row: auto; }
+.mhero__body { align-items: center; }
+.cathead__desc:empty { display: none; }

@@ -16,34 +16,31 @@ function card(ctx, p, opts = {}) {
 export function home(ctx) {
   const { root, site, products, tree, collections, byHandle } = ctx;
   const c = (slug) => `${root}categorias/${slug}/`;
-  const total = products.length.toLocaleString('es-AR');
   const [h1, h2, h3] = site.hero.map((h) => byHandle[h]);
   const featured = products.filter((p) => p.available && p.images.length).slice(0, 8);
   const sale = products.filter((p) => p.available && p.compare_at_price).slice(0, 8);
   const cover = (slug) => byHandle[site.covers[slug]];
-  const allSubs = tree.flatMap((t) => t.children);
+  // Home category carousel: the 4 top categories first, then subcategories (largest first), then collections
+  const keyOf = (slug) => (cover(slug) || ctx.nav[slug].mosaic[0])?.images[0]?.key;
+  const catCards = [...tree, ...tree.flatMap((t) => t.children).sort((a, b) => b.count - a.count), ...collections]
+    .map((k) => ({ slug: k.slug, name: k.name, key: keyOf(k.slug) })).filter((k) => k.key);
   const ways = [
     { icon: 'truck', ...site.shipping[0] },
-    { icon: 'moto', title: 'Moto CABA y Moto Flash', eta: '2 a 5 días hábiles · o al día siguiente', text: 'Mensajería en la Ciudad de Buenos Aires. Con Moto Flash, tu pedido sale al día siguiente; la mensajería se comunica antes para coordinar.' },
-    { icon: 'store', title: 'Retiro en el local', eta: 'Estándar 2 a 5 días hábiles · Flash al día siguiente', text: `${site.contact.address}, CABA. ${site.contact.pickup_hours}. Te avisamos cuando tu pedido está listo.` },
+    { icon: 'moto', title: 'Moto CABA y Moto Flash', eta: '2 a 5 días hábiles · o al día siguiente', text: 'Mensajería en CABA. Te escriben antes para coordinar.' },
+    { icon: 'store', title: 'Retiro en el local', eta: 'Estándar 2 a 5 días hábiles · Flash al día siguiente', text: `${site.contact.address}, CABA. ${site.contact.pickup_hours}. Te avisamos cuando está listo.` },
   ];
   const tile = (key, cls, alt, label, href) => `<a class="hero__tile ${cls}" href="${href}"><img src="${img(root, key)}" alt="${esc(alt)}" width="960" height="1344" ${cls ? 'fetchpriority="high"' : 'loading="eager"'} decoding="async" sizes="(min-width: 960px) 30vw, 60vw" srcset="${img(root, key, 480)} 480w, ${img(root, key, 960)} 960w"><span class="hero__tag">${esc(label)} ${icon('arrowRight')}</span></a>`;
   const body = `
 <section class="hero">
   <div class="container hero__grid">
     <div class="hero__copy reveal">
-      <p class="eyebrow">Papelera Avellaneda · Buenos Aires</p>
-      <h1 class="display">Todo para <em>celebrar</em>, envolver y poner la mesa.</h1>
-      <p class="lead">Papelería, deco y fiesta: globos, guirnaldas, servilletas, bolsas, cajas y mucho más para tus cumpleaños, regalos y encuentros. Envíos a todo el país y retiro en nuestro local de CABA.</p>
+      <p class="eyebrow">Papelera Avellaneda · CABA</p>
+      <h1 class="display">Todo listo para <em>festejar</em>.</h1>
+      <p class="lead">Globos, mesa, envoltorios y esos detalles que hacen la fiesta.</p>
       <div class="hero__ctas">
-        <a class="btn btn--lg" href="${root}productos/">Ver todos los productos ${icon('arrowRight')}</a>
-        <a class="btn btn--ghost btn--lg" href="#categorias">Explorar categorías</a>
+        <a class="btn btn--lg" href="${root}productos/">Ver todo ${icon('arrowRight')}</a>
+        <a class="btn btn--ghost btn--lg" href="#categorias">Categorías</a>
       </div>
-      <ul class="hero__facts">
-        <li><strong>${total}</strong><span>productos en la tienda</span></li>
-        <li><strong>${site.installments_no_interest} cuotas</strong><span>sin interés</span></li>
-        <li><strong>${site.returns_days} días</strong><span>para cambios y devoluciones</span></li>
-      </ul>
     </div>
     <div class="hero__art reveal" style="transition-delay:.1s">
       <div class="hero__stamp" aria-hidden="true"><span>Envíos a<br>todo el país<small>Correo Argentino</small></span></div>
@@ -56,57 +53,46 @@ export function home(ctx) {
 
 <section class="trust" aria-label="Por qué comprar en La Pelpa!">
   <div class="container"><ul class="trust__list">
-    <li class="trust__item"><span class="trust__icon">${icon('card')}</span><div><p class="trust__title">${site.installments_no_interest} cuotas sin interés</p><p class="trust__text">Con Mercado Pago. También transferencia y efectivo.</p></div></li>
-    <li class="trust__item"><span class="trust__icon">${icon('truck')}</span><div><p class="trust__title">Envíos a todo el país</p><p class="trust__text">Correo Argentino a domicilio o sucursal, con seguimiento.</p></div></li>
-    <li class="trust__item"><span class="trust__icon">${icon('store')}</span><div><p class="trust__title">Retiro en el local</p><p class="trust__text">${esc(site.contact.address)}, CABA · Lun a vie 10:30–17 h.</p></div></li>
-    <li class="trust__item"><span class="trust__icon">${icon('returns')}</span><div><p class="trust__title">Cambios y devoluciones</p><p class="trust__text">Dentro de los ${site.returns_days} días de recibido tu pedido.</p></div></li>
+    <li class="trust__item"><span class="trust__icon">${icon('card')}</span><div><p class="trust__title">${site.installments_no_interest} cuotas sin interés</p><p class="trust__text">Con Mercado Pago.</p></div></li>
+    <li class="trust__item"><span class="trust__icon">${icon('truck')}</span><div><p class="trust__title">Envíos a todo el país</p><p class="trust__text">Por Correo Argentino, con seguimiento.</p></div></li>
+    <li class="trust__item"><span class="trust__icon">${icon('store')}</span><div><p class="trust__title">Retiro en el local</p><p class="trust__text">${esc(site.contact.address)}, CABA.</p></div></li>
+    <li class="trust__item"><span class="trust__icon">${icon('returns')}</span><div><p class="trust__title">${site.returns_days} días para cambios</p><p class="trust__text">Desde que recibís tu pedido.</p></div></li>
   </ul></div>
 </section>
 
 <section class="section" id="categorias" aria-labelledby="cat-title">
-  <div class="container">
-    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Comprá por categoría</p><h2 class="h2" id="cat-title">Todo lo que necesitás para cada <em>ocasión</em>.</h2></div><a class="link-arrow" href="${root}productos/">Ver los ${total} productos ${icon('arrowRight')}</a></div>
-    <div class="cats">
-      ${tree.map((t, i) => { const p = cover(t.slug); return `<a class="cat-tile reveal" style="transition-delay:${i * 0.06}s" href="${c(t.slug)}"><img src="${img(root, p.images[0].key, 960)}" srcset="${img(root, p.images[0].key, 480)} 480w, ${img(root, p.images[0].key, 960)} 960w" sizes="(min-width: 1024px) 24vw, 48vw" alt="" loading="lazy" decoding="async" width="960" height="1280"><span class="cat-tile__body"><span><span class="cat-tile__name">${esc(t.name)}</span><span class="cat-tile__count">${t.count} productos</span></span><span class="cat-tile__arrow">${icon('arrowRight')}</span></span></a>`; }).join('')}
+  <div class="container" data-rail>
+    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Categorías</p><h2 class="h2" id="cat-title">¿Qué festejamos <em>hoy</em>?</h2></div>
+      <div class="carousel__ctrl"><a class="link-arrow" href="${root}categorias/">Ver todas ${icon('arrowRight')}</a><button type="button" class="carousel__btn" data-rail-prev aria-label="Anteriores" hidden>${icon('chevronLeft')}</button><button type="button" class="carousel__btn" data-rail-next aria-label="Siguientes" hidden>${icon('chevronRight')}</button></div>
     </div>
-    <div class="home-subcats reveal">
-      <div class="home-subcats__head"><p class="eyebrow eyebrow--plain">Explorá por tipo de producto</p><p class="home-subcats__meta">${allSubs.length} subcategorías</p></div>
-      ${catRail(ctx, allSubs.map((s) => ({ href: c(s.slug), name: s.name, count: ctx.nav[s.slug].count, thumb: ctx.nav[s.slug].thumb })), { label: 'Subcategorías', grid: true })}
-    </div>
+    <ul class="catcar" data-rail-track aria-label="Categorías">${catCards.map((k, i) => `<li><a class="cat-tile" href="${c(k.slug)}"><img src="${img(root, k.key, 960)}" srcset="${img(root, k.key, 480)} 480w, ${img(root, k.key, 960)} 960w" sizes="(min-width: 1024px) 24vw, 72vw" alt="" ${i < 4 ? '' : 'loading="lazy" '}decoding="async" width="960" height="1280"><span class="cat-tile__body"><span class="cat-tile__name">${esc(k.name)}</span><span class="cat-tile__arrow">${icon('arrowRight')}</span></span></a></li>`).join('')}</ul>
   </div>
 </section>
 
 <section class="section section--surface" aria-labelledby="feat-title">
   <div class="container">
-    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Selección de la tienda</p><h2 class="h2" id="feat-title">Para tu próxima <em>celebración</em>.</h2></div><a class="link-arrow" href="${root}productos/">Ver todo ${icon('arrowRight')}</a></div>
+    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Selección</p><h2 class="h2" id="feat-title">Para tu próxima <em>fiesta</em>.</h2></div><a class="link-arrow" href="${root}productos/">Ver todo ${icon('arrowRight')}</a></div>
     <div class="rail">${featured.map((p) => card(ctx, p)).join('')}</div>
   </div>
 </section>
 
 <section class="section" aria-label="Destacados de deco y fiesta">
   <div class="container editorial">
-    <a class="story reveal" href="${c('globos')}"><div class="story__media"><img src="${root}assets/img/brand/banner-1.webp" alt="Guirnalda de globos dorados, blancos y con confetti" width="921" height="432" loading="lazy"></div><div class="story__body"><div><p class="eyebrow eyebrow--plain">Globos</p><h2 class="h3">Globos para armar tu deco</h2><p>Látex, metalizados, con confetti, números y letras.</p></div><span class="btn btn--ghost">Ver globos</span></div></a>
-    <a class="story reveal" style="transition-delay:.08s" href="${c('banderines-y-guirnaldas')}"><div class="story__media"><img src="${root}assets/img/brand/banner-2.webp" alt="Banderín de tela en colores pastel con pompones" width="921" height="432" loading="lazy"></div><div class="story__body"><div><p class="eyebrow eyebrow--plain">Banderines y guirnaldas</p><h2 class="h3">Color para cada rincón</h2><p>Banderines, guirnaldas de flecos y más para decorar.</p></div><span class="btn btn--ghost">Ver banderines</span></div></a>
+    <a class="story reveal" href="${c('globos')}"><div class="story__media"><img src="${root}assets/img/brand/banner-1.webp" alt="Guirnalda de globos dorados, blancos y con confetti" width="921" height="432" loading="lazy"></div><div class="story__body"><div><p class="eyebrow eyebrow--plain">Globos</p><h2 class="h3">Que se note la fiesta</h2><p>Látex, metalizados, números y letras.</p></div><span class="btn btn--ghost">Ver globos</span></div></a>
+    <a class="story reveal" style="transition-delay:.08s" href="${c('banderines-y-guirnaldas')}"><div class="story__media"><img src="${root}assets/img/brand/banner-2.webp" alt="Banderín de tela en colores pastel con pompones" width="921" height="432" loading="lazy"></div><div class="story__body"><div><p class="eyebrow eyebrow--plain">Banderines y guirnaldas</p><h2 class="h3">Color de punta a punta</h2><p>Para colgar donde quieras.</p></div><span class="btn btn--ghost">Ver banderines</span></div></a>
   </div>
 </section>
 
 ${sale.length ? `<section class="section section--surface" aria-labelledby="sale-title">
   <div class="container">
-    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Precios especiales</p><h2 class="h2" id="sale-title">Aprovechá estas <em>ofertas</em>.</h2></div><a class="link-arrow" href="${root}productos/?oferta=1">Ver todas las ofertas ${icon('arrowRight')}</a></div>
+    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Ofertas</p><h2 class="h2" id="sale-title">Precios de <em>festejo</em>.</h2></div><a class="link-arrow" href="${root}productos/?oferta=1">Ver ofertas ${icon('arrowRight')}</a></div>
     <div class="rail">${sale.map((p) => card(ctx, p)).join('')}</div>
   </div>
 </section>` : ''}
 
-<section class="section" aria-labelledby="coll-title">
-  <div class="container">
-    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Colecciones</p><h2 class="h2" id="coll-title">Pequeñas cosas, grandes <em>detalles</em>.</h2></div></div>
-    <div class="collections">${collections.map((s, i) => { const p = cover(s.slug); return `<a class="coll reveal" style="transition-delay:${i * 0.05}s" href="${c(s.slug)}"><span class="coll__media"><img src="${img(root, p.images[0].key, 480)}" alt="" loading="lazy" decoding="async" width="480" height="672"></span><span class="coll__name">${esc(s.name)}<span class="coll__count">${s.count} productos</span></span></a>`; }).join('')}</div>
-  </div>
-</section>
-
 <section class="section section--surface" aria-labelledby="ship-title">
   <div class="container">
-    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Envíos y retiro</p><h2 class="h2" id="ship-title">Llega a todo el país. <em>O pasá a buscarlo.</em></h2></div><a class="link-arrow" href="${root}envios-y-devoluciones/">Envíos y devoluciones ${icon('arrowRight')}</a></div>
+    <div class="section-head reveal"><div class="section-head__intro"><p class="eyebrow">Envíos</p><h2 class="h2" id="ship-title">Te lo llevamos. <em>O pasá a buscarlo.</em></h2></div><a class="link-arrow" href="${root}envios-y-devoluciones/">Envíos y devoluciones ${icon('arrowRight')}</a></div>
     <ul class="ways">${ways.map((w) => `<li class="way reveal"><span class="way__icon">${icon(w.icon)}</span><h3 class="way__title">${esc(w.title)}</h3><p class="way__eta">${esc(w.eta)}</p><p class="way__text">${esc(w.text)}</p></li>`).join('')}</ul>
   </div>
 </section>
@@ -114,9 +100,9 @@ ${sale.length ? `<section class="section section--surface" aria-labelledby="sale
 <section class="section" aria-labelledby="faq-title">
   <div class="container split">
     <div class="split__aside reveal">
-      <p class="eyebrow">Preguntas frecuentes</p>
-      <h2 class="h2" id="faq-title">Comprá con <em>tranquilidad</em>.</h2>
-      <p class="lead">Envíos, retiros, pagos y cambios: lo que más nos consultan. ¿Te quedó alguna duda? Escribinos.</p>
+      <p class="eyebrow">Preguntas</p>
+      <h2 class="h2" id="faq-title">Todo claro, <em>antes de comprar</em>.</h2>
+      <p class="lead">¿Te queda alguna duda? Escribinos.</p>
       <div class="hero__ctas"><a class="btn btn--wa" href="https://wa.me/${site.contact.whatsapp}" target="_blank" rel="noopener">${icon('whatsapp')}WhatsApp ${esc(site.contact.whatsapp_display)}</a><a class="btn btn--ghost" href="${root}preguntas-frecuentes/">Ver todas</a></div>
     </div>
     <div class="reveal">${acc(faqs(site).slice(0, 6), 'faq')}</div>
@@ -126,7 +112,7 @@ ${sale.length ? `<section class="section section--surface" aria-labelledby="sale
 <section class="section section--tight" aria-label="Visitanos">
   <div class="container">
     <div class="visit reveal">
-      <div><p class="eyebrow">Visitanos</p><h2 class="h2" style="margin-top:.75rem">Nuestro local en <em>Av. Avellaneda</em>.</h2><p class="lead" style="margin-top:1rem">Retirá tus compras o consultanos lo que necesites.</p></div>
+      <div><p class="eyebrow">El local</p><h2 class="h2" style="margin-top:.75rem">Pasá por <em>Av. Avellaneda</em>.</h2><p class="lead" style="margin-top:1rem">Retirá tu pedido o vení a vernos.</p></div>
       <ul class="visit__list">
         <li>${icon('pin')}<div><strong>Dirección</strong>${esc(site.contact.address)}, ${esc(site.contact.city)}</div></li>
         <li>${icon('clock')}<div><strong>Atención</strong>${esc(site.contact.hours)} · Retiros ${esc(site.contact.pickup_hours.toLowerCase())}</div></li>
@@ -142,13 +128,13 @@ ${sale.length ? `<section class="section section--surface" aria-labelledby="sale
   <div class="container">
     <div class="newsletter reveal">
       <span class="newsletter__deco" aria-hidden="true"></span>
-      <div><p class="eyebrow">Newsletter</p><h2 class="h2" id="nl-title" style="margin-top:.75rem">Enterate de las <em>novedades</em>.</h2><p style="margin-top:1rem">Suscribite y recibí en tu mail las novedades de la tienda.</p></div>
+      <div><p class="eyebrow">Newsletter</p><h2 class="h2" id="nl-title" style="margin-top:.75rem">Primero en <em>enterarte</em>.</h2><p style="margin-top:1rem">Novedades de la tienda, directo a tu mail.</p></div>
       <form class="newsletter__form" data-demo-form="¡Gracias! (Demo: en este concepto no se guarda ningún dato.)" novalidate>
         <label class="sr-only" for="nl-email">Tu email</label>
         <input class="input" id="nl-email" type="email" name="email" placeholder="Tu email" autocomplete="email" required>
-        <button class="btn btn--light" type="submit">Suscribirme</button>
+        <button class="btn btn--light" type="submit">Sumarme</button>
         <p class="newsletter__msg" data-form-msg hidden role="status"></p>
-        <p class="newsletter__note">Concepto de diseño: el formulario no envía datos.</p>
+        <p class="newsletter__note">Demo: este formulario no envía datos.</p>
       </form>
     </div>
   </div>
@@ -175,7 +161,7 @@ export function catalog(ctx, scope) {
   // Breadcrumb: the current level doubles as a switcher to its siblings (with counts)
   const sib = (list) => list.map((x) => ({ name: x.name, href: c(x.slug), count: x.count, current: x.slug === scope.slug }));
   const crumbItems = [{ name: 'Inicio', href: root }];
-  if (scope.type === 'all') crumbItems.push({ name: 'Todos los productos' });
+  if (scope.type === 'all') crumbItems.push({ name: 'Ver todo' });
   else {
     crumbItems.push({ name: 'Categorías', href: `${root}categorias/` });
     if (parent) crumbItems.push({ name: parent.name, href: c(parent.slug) });
@@ -189,38 +175,35 @@ export function catalog(ctx, scope) {
   if (scope.type === 'all') { railItems = [...tree, ...collections].map((t) => ri(t)); railLabel = 'Categorías y colecciones'; }
   else if (scope.children?.length) { railItems = [ri(scope, { name: 'Ver todo', current: true }), ...scope.children.map((s) => ri(s))]; railLabel = `Subcategorías de ${scope.name}`; }
   else if (parent) { railItems = [ri(parent, { name: 'Ver todo', current: false }), ...parent.children.map((s) => ri(s))]; railLabel = `Subcategorías de ${parent.name}`; }
-  else { railItems = [{ href: `${root}productos/`, name: 'Todos los productos', count: ctx.products.length }, ...[...tree, ...collections].filter((t) => t.slug !== scope.slug).map((t) => ri(t))]; railLabel = 'Explorá también'; }
-  const chipsNav = `<div class="cathead__rail"><p class="cathead__rail-label">${scope.children?.length || parent ? 'Subcategorías' : scope.type === 'all' ? 'Comprá por categoría' : 'Explorá también'}</p>${catRail(ctx, railItems, { label: railLabel, eager: true })}</div>`;
+  else { railItems = [{ href: `${root}productos/`, name: 'Ver todo' }, ...[...tree, ...collections].filter((t) => t.slug !== scope.slug).map((t) => ri(t))]; railLabel = 'Explorá también'; }
+  const chipsNav = `<div class="cathead__rail">${catRail(ctx, railItems, { label: railLabel, eager: true })}</div>`;
 
   // Filter checkboxes: subcategories inside this scope (or top categories on "all")
   const subOptions = scope.type === 'all' ? [...tree, ...collections] : (scope.children || []);
   const count = (pred) => items.filter(pred).length;
   const saleCount = count((p) => p.compare_at_price > p.price);
   const prices = [[null, 5000, 'Hasta $5.000'], [5000, 15000, '$5.000 – $15.000'], [15000, 30000, '$15.000 – $30.000'], [30000, null, 'Más de $30.000']];
-  const tree2 = `<ul class="filters__list">${tree.map((t) => `<li><a class="filters__cat" href="${c(t.slug)}"${t.slug === scope.slug || t.slug === scope.parent ? ' aria-current="page"' : ''}>${esc(t.name)} <span class="check__count">${t.count}</span></a>${(t.slug === scope.slug || t.slug === scope.parent) && t.children.length ? `<ul class="filters__list">${t.children.map((s) => `<li><a class="filters__cat" href="${c(s.slug)}"${s.slug === scope.slug ? ' aria-current="page"' : ''}>${esc(s.name)} <span class="check__count">${s.count}</span></a></li>`).join('')}</ul>` : ''}</li>`).join('')}<li><a class="filters__cat" href="${root}productos/"${scope.type === 'all' ? ' aria-current="page"' : ''}>Todos los productos <span class="check__count">${ctx.products.length}</span></a></li></ul>`;
+  const tree2 = `<ul class="filters__list">${tree.map((t) => `<li><a class="filters__cat" href="${c(t.slug)}"${t.slug === scope.slug || t.slug === scope.parent ? ' aria-current="page"' : ''}>${esc(t.name)}</a>${(t.slug === scope.slug || t.slug === scope.parent) && t.children.length ? `<ul class="filters__list">${t.children.map((s) => `<li><a class="filters__cat" href="${c(s.slug)}"${s.slug === scope.slug ? ' aria-current="page"' : ''}>${esc(s.name)}</a></li>`).join('')}</ul>` : ''}</li>`).join('')}<li><a class="filters__cat" href="${root}productos/"${scope.type === 'all' ? ' aria-current="page"' : ''}>Ver todo</a></li></ul>`;
   const filters = `<div id="filters" class="filters">
-    ${subOptions.length ? `<fieldset class="filters__group" style="border:0;margin:0;padding-inline:0"><legend class="filters__title">${scope.type === 'all' ? 'Categoría' : 'Tipo de producto'}</legend><div class="filters__list">${subOptions.map((s) => `<label class="check"><input type="checkbox" name="sub" value="${s.slug}"> ${esc(s.name)} <span class="check__count">${count((p) => p.categories.includes(s.slug))}</span></label>`).join('')}</div></fieldset>` : ''}
+    ${subOptions.length ? `<fieldset class="filters__group" style="border:0;margin:0;padding-inline:0"><legend class="filters__title">${scope.type === 'all' ? 'Categoría' : 'Tipo de producto'}</legend><div class="filters__list">${subOptions.map((s) => `<label class="check"><input type="checkbox" name="sub" value="${s.slug}"> ${esc(s.name)}</label>`).join('')}</div></fieldset>` : ''}
     <fieldset class="filters__group" style="border:0;margin:0;padding-inline:0"><legend class="filters__title">Precio</legend>
       <div class="filters__price"><label class="sr-only" for="f-min">Precio mínimo</label><input class="input" id="f-min" type="number" inputmode="numeric" min="0" step="100" name="min" placeholder="Mín."><span>–</span><label class="sr-only" for="f-max">Precio máximo</label><input class="input" id="f-max" type="number" inputmode="numeric" min="0" step="100" name="max" placeholder="Máx."></div>
       <div class="filters__presets">${prices.map(([a, b, l]) => `<button type="button" class="chip" data-preset data-min="${a ?? ''}" data-max="${b ?? ''}">${l}</button>`).join('')}</div>
     </fieldset>
     <fieldset class="filters__group" style="border:0;margin:0;padding-inline:0"><legend class="filters__title">Disponibilidad</legend>
-      <label class="check"><input type="checkbox" name="stock"> Solo con stock <span class="check__count">${count((p) => p.available)}</span></label>
-      ${saleCount ? `<label class="check"><input type="checkbox" name="sale"> En oferta <span class="check__count">${saleCount}</span></label>` : ''}
+      <label class="check"><input type="checkbox" name="stock"> Solo con stock</label>
+      ${saleCount ? `<label class="check"><input type="checkbox" name="sale"> En oferta</label>` : ''}
     </fieldset>
     <div class="filters__group"><p class="filters__title">Categorías</p>${tree2}</div>
   </div>`;
 
-  const title = scope.type === 'all' ? 'Todos los productos' : scope.name;
+  const title = scope.type === 'all' ? 'Todo La Pelpa!' : scope.name;
   const avail = items.filter((p) => p.available);
   const minP = avail.length ? Math.min(...avail.map((p) => p.price)) : null;
   const saleN = saleCount;
   const kicker = scope.type === 'all' ? 'Tienda' : scope.type === 'collection' ? 'Colección' : parent ? parent.name : 'Categoría';
   // Only real copy: the store's own category text when it exists, otherwise a factual line
-  const desc = scope.type === 'all' ? `${esc(site.tagline)}: el catálogo completo de La Pelpa!, en ${tree.length} categorías y ${collections.length} colecciones.`
-    : nav[scope.slug].description ? esc(nav[scope.slug].description)
-    : parent ? `Parte de <a href="${c(parent.slug)}">${esc(parent.name)}</a>.`
-    : scope.children?.length ? `${scope.children.length} subcategorías para elegir.` : '';
+  const desc = nav[scope.slug]?.description ? esc(nav[scope.slug].description) : '';
   const mosaic = scope.type === 'all' ? tree.slice(0, 3).map((t) => nav[t.slug].mosaic[0]).filter(Boolean) : nav[scope.slug].mosaic;
   const label = (p) => {
     const subs = scope.type === 'all' ? tree.map((t) => t.slug) : (scope.children || []).map((s) => s.slug);
@@ -239,12 +222,6 @@ export function catalog(ctx, scope) {
           ${mosaic[0] ? `<span class="cathead__thumb" aria-hidden="true"><img src="${root}${scope.type === 'all' ? `assets/img/nav/${tree[0].slug}.webp` : nav[scope.slug].thumb}" alt="" width="120" height="120"></span>` : ''}
         </div>
         ${desc ? `<p class="cathead__desc">${desc}</p>` : ''}
-        <ul class="cathead__stats">
-          <li><strong data-count>${n.toLocaleString('es-AR')} productos</strong></li>
-          ${minP ? `<li>Desde <strong>${money(minP)}</strong></li>` : ''}
-          ${saleN ? `<li><a href="?oferta=1" data-quick-link="sale"><strong>${saleN}</strong> en oferta</a></li>` : ''}
-          <li>${site.installments_no_interest} cuotas sin interés</li>
-        </ul>
       </div>
       ${mosaic.length ? `<div class="cathead__art" aria-hidden="true">${mosaic.map((m, i) => `<span class="cathead__tile cathead__tile--${i}"><img src="${img(root, m.images[0].key, i ? 480 : 960)}" alt="" width="${i ? 480 : 960}" height="${i ? 672 : 1344}" ${i ? 'loading="lazy" ' : 'fetchpriority="high" '}decoding="async"></span>`).join('')}</div>` : ''}
     </div>
@@ -255,7 +232,6 @@ export function catalog(ctx, scope) {
   <aside class="catalog__aside" aria-label="Filtros">${filters}</aside>
   <div>
     <div class="toolbar" data-toolbar>
-      <p class="toolbar__count" data-count aria-live="polite">${n.toLocaleString('es-AR')} productos</p>
       <div class="toolbar__right">
         <button type="button" class="tchip tchip--filter" data-open-filters aria-controls="filters-drawer">${icon('sliders')}Filtrar<span class="tchip__badge" data-filter-badge hidden>0</span></button>
         <label class="tchip tchip--sort"><span class="sort-label">Ordenar</span><select class="tchip__select" id="sort" name="orden" aria-label="Ordenar productos">
@@ -267,19 +243,18 @@ export function catalog(ctx, scope) {
         </select>${icon('chevronDown')}</label>
         ${scope.children?.length
           // Parent category: in-place subcategory filter chips with counts (sticky on mobile)
-          ? `<span class="toolbar__div" aria-hidden="true"></span><span class="toolbar__subs" role="group" aria-label="Filtrar por subcategoría">${scope.children.map((s) => `<button type="button" class="tchip tchip--sub" data-sub-chip="${s.slug}" aria-pressed="false">${esc(s.name)} <span class="tchip__n">${s.count}</span></button>`).join('')}</span>`
-          : `${saleCount ? `<button type="button" class="tchip tchip--quick" data-quick="sale" aria-pressed="false">${icon('sparkle')}En oferta <span class="tchip__n">${saleCount}</span></button>` : ''}
+          ? `<span class="toolbar__div" aria-hidden="true"></span><span class="toolbar__subs" role="group" aria-label="Filtrar por subcategoría">${scope.children.map((s) => `<button type="button" class="tchip tchip--sub" data-sub-chip="${s.slug}" aria-pressed="false">${esc(s.name)}</button>`).join('')}</span>`
+          : `${saleCount ? `<button type="button" class="tchip tchip--quick" data-quick="sale" aria-pressed="false">${icon('sparkle')}En oferta</button>` : ''}
         <button type="button" class="tchip tchip--quick" data-quick="stock" aria-pressed="false">Con stock</button>
         <button type="button" class="tchip tchip--quick" data-quick="p5000" aria-pressed="false">Hasta $5.000</button>`}
       </div>
     </div>
     <div class="active-filters" data-active></div>
     <div class="grid grid--catalog" data-grid>${first.map((p, i) => card(ctx, p, { eager: i < 4, catLabel: label(p) })).join('')}</div>
-    <div class="empty" data-empty hidden>${icon('search')}<p class="h4">No encontramos productos con esos filtros</p><p class="muted">Probá quitar algún filtro o buscá con otra palabra.</p><button type="button" class="btn btn--ghost" data-reset-filters>Limpiar filtros</button></div>
+    <div class="empty" data-empty hidden>${icon('search')}<p class="h4">Nada por acá… todavía</p><p class="muted">Probá con menos filtros u otra palabra.</p><button type="button" class="btn btn--ghost" data-reset-filters>Limpiar filtros</button></div>
     <div class="load-more" data-more>
-      <p class="load-more__text" data-more-text>Mostrando ${Math.min(24, n)} de ${n.toLocaleString('es-AR')}</p>
       <div class="load-more__bar" aria-hidden="true"><span data-more-bar style="width:${n ? (Math.min(24, n) / n) * 100 : 0}%"></span></div>
-      <button type="button" class="btn btn--ghost" data-more-btn${n <= 24 ? ' hidden' : ''}>Ver más productos</button>
+      <button type="button" class="btn btn--ghost" data-more-btn${n <= 24 ? ' hidden' : ''}>Ver más</button>
       <noscript><p class="muted small">Activá JavaScript para ver todos los productos y usar los filtros.</p></noscript>
     </div>
   </div>
@@ -289,13 +264,13 @@ export function catalog(ctx, scope) {
   <div class="drawer__panel">
     <div class="drawer__head"><h2 class="drawer__title" id="filters-title">Filtrar</h2><button type="button" class="icon-btn" data-close aria-label="Cerrar filtros">${icon('close')}</button></div>
     <div class="drawer__body"></div>
-    <div class="drawer__foot" style="display:grid;grid-template-columns:auto 1fr;gap:.75rem"><button type="button" class="btn btn--ghost" data-reset-filters>Limpiar</button><button type="button" class="btn" data-close>Ver <span data-count>${n} productos</span></button></div>
+    <div class="drawer__foot" style="display:grid;grid-template-columns:auto 1fr;gap:.75rem"><button type="button" class="btn btn--ghost" data-reset-filters>Limpiar</button><button type="button" class="btn" data-close>Ver resultados</button></div>
   </div>
 </div>`;
   const path = scope.type === 'all' ? 'productos/' : `categorias/${scope.slug}/`;
   const jsonld = [{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbItems.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, ...(it.href ? { item: ctx.abs(it.href) } : {}) })) }];
   return layout(ctx, {
-    title, description: scope.type === 'all' ? `Todos los productos de La Pelpa!: ${n} artículos de papelería, deco y fiesta.` : `${scope.name}: ${n} productos en La Pelpa! · Papelera Avellaneda. Envíos a todo el país y retiro en CABA.`,
+    title, description: scope.type === 'all' ? 'Todo La Pelpa!: papelería, deco y fiesta. Envíos a todo el país y retiro en CABA.' : `${scope.name} en La Pelpa! · Papelera Avellaneda. Envíos a todo el país y retiro en CABA.`,
     canonical: site.base_url + path, page: 'catalog', current: scope.parent || scope.slug, here: scope.slug, body, after, jsonld,
   });
 }
@@ -359,7 +334,7 @@ export function product(ctx, p) {
         <p class="buybox__inst">${icon('card')}<span><strong>${site.installments_no_interest} cuotas sin interés</strong> de <span data-installments>${installment(v0.price, site.installments_no_interest)}</span></span></p>
       </div>
       ${options}
-      <p class="stock" data-stock role="status">${p.available ? 'En stock · listo para enviar' : 'Sin stock'}</p>
+      <p class="stock" data-stock role="status">${p.available ? 'En stock, listo para salir' : 'Sin stock'}</p>
       <div class="buybox__actions">
         <div class="qty" role="group" aria-label="Cantidad">
           <button type="button" data-qty-dec aria-label="Restar uno">${icon('minus')}</button>
@@ -381,7 +356,7 @@ export function product(ctx, p) {
 </div>
 ${related.length ? `<section class="section section--surface" aria-labelledby="rel-title">
   <div class="container">
-    <div class="section-head"><div class="section-head__intro"><p class="eyebrow">${primary ? esc(primary.name) : 'Productos'}</p><h2 class="h2" id="rel-title">También te puede <em>gustar</em>.</h2></div>${primary ? `<a class="link-arrow" href="${c(primary.slug)}">Ver todo ${icon('arrowRight')}</a>` : ''}</div>
+    <div class="section-head"><div class="section-head__intro"><h2 class="h2" id="rel-title">Para sumar a la <em>fiesta</em>.</h2></div>${primary ? `<a class="link-arrow" href="${c(primary.slug)}">Ver todo ${icon('arrowRight')}</a>` : ''}</div>
     <div class="rail">${related.map((r) => card(ctx, r)).join('')}</div>
   </div>
 </section>` : ''}
@@ -459,12 +434,12 @@ export function shippingPage(ctx) {
     <h3>Cambios en esta política</h3>
     <p>La tienda se reserva el derecho de modificar sus políticas de devolución en cualquier momento; los cambios se publicarán en este sitio.</p>
   </div>`;
-  return contentPage(ctx, { slug: 'envios-y-devoluciones', title: 'Envíos y devoluciones', eyebrow: 'Ayuda', intro: 'Envíos a todo el país, mensajería en CABA y retiro en nuestro local de Av. Avellaneda.', html });
+  return contentPage(ctx, { slug: 'envios-y-devoluciones', title: 'Envíos y devoluciones', eyebrow: 'Ayuda', intro: 'Llegamos a todo el país. En CABA, también en moto.', html });
 }
 
 export function faqPage(ctx) {
-  const html = acc(faqs(ctx.site), 'faqp') + `<div class="visit" style="margin-top:3rem"><div><h2 class="h3">¿No encontraste tu respuesta?</h2><p class="muted" style="margin:.5rem 0 0">Escribinos y te ayudamos. ${esc(ctx.site.contact.hours)}.</p></div><div class="hero__ctas"><a class="btn btn--wa" href="https://wa.me/${ctx.site.contact.whatsapp}" target="_blank" rel="noopener">${icon('whatsapp')}WhatsApp</a><a class="btn btn--ghost" href="mailto:${ctx.site.contact.email}">${icon('mail')}Email</a></div></div>`;
-  return contentPage(ctx, { slug: 'preguntas-frecuentes', title: 'Preguntas frecuentes', eyebrow: 'Ayuda', intro: 'Todo sobre envíos, retiros, pagos, cambios y devoluciones.', html });
+  const html = acc(faqs(ctx.site), 'faqp') + `<div class="visit" style="margin-top:3rem"><div><h2 class="h3">¿Te quedó alguna duda?</h2><p class="muted" style="margin:.5rem 0 0">Escribinos. ${esc(ctx.site.contact.hours)}.</p></div><div class="hero__ctas"><a class="btn btn--wa" href="https://wa.me/${ctx.site.contact.whatsapp}" target="_blank" rel="noopener">${icon('whatsapp')}WhatsApp</a><a class="btn btn--ghost" href="mailto:${ctx.site.contact.email}">${icon('mail')}Email</a></div></div>`;
+  return contentPage(ctx, { slug: 'preguntas-frecuentes', title: 'Preguntas frecuentes', eyebrow: 'Ayuda', intro: 'Envíos, pagos y cambios, sin vueltas.', html });
 }
 
 export function contactPage(ctx) {
@@ -491,10 +466,10 @@ export function contactPage(ctx) {
       <div class="field"><label for="cf-msg">Mensaje</label><textarea class="input" id="cf-msg" name="message" rows="5" required></textarea></div>
       <button class="btn btn--block btn--lg" type="submit">Enviar mensaje</button>
       <p class="notice" data-form-msg hidden role="status"></p>
-      <p class="muted small" style="margin:0">Concepto de diseño: este formulario no envía datos. Para consultas reales, usá WhatsApp o email.</p>
+      <p class="muted small" style="margin:0">Demo: este formulario no envía datos. Para consultas reales, WhatsApp o email.</p>
     </form>
   </div>`;
-  return contentPage(ctx, { slug: 'contacto', title: 'Contacto', eyebrow: 'Estamos para ayudarte', intro: `Atendemos de ${c.hours.toLowerCase()}. La forma más rápida de contactarnos es por WhatsApp.`, html });
+  return contentPage(ctx, { slug: 'contacto', title: 'Contacto', eyebrow: 'Hablemos', intro: `Lo más rápido es WhatsApp. Atendemos de ${c.hours.toLowerCase()}.`, html });
 }
 
 export function termsPage(ctx, blocks) {
@@ -508,27 +483,25 @@ export function termsPage(ctx, blocks) {
 
 export function notFound(ctx) {
   const { root } = ctx;
-  const body = `<div class="container container--narrow empty" style="min-height:50vh">${icon('search')}<p class="eyebrow eyebrow--plain">Error 404</p><h1 class="h2">No encontramos esta página</h1><p class="muted">Puede que el enlace haya cambiado. Buscá lo que necesitás o volvé al inicio.</p><div class="hero__ctas" style="justify-content:center"><a class="btn" href="${root}">Ir al inicio</a><a class="btn btn--ghost" href="${root}productos/">Ver productos</a></div></div>`;
+  const body = `<div class="container container--narrow empty" style="min-height:50vh">${icon('search')}<p class="eyebrow eyebrow--plain">Error 404</p><h1 class="h2">Esta página se fue de fiesta</h1><p class="muted">Volvé al inicio o seguí mirando.</p><div class="hero__ctas" style="justify-content:center"><a class="btn" href="${root}">Ir al inicio</a><a class="btn btn--ghost" href="${root}productos/">Ver todo</a></div></div>`;
   return layout(ctx, { title: 'Página no encontrada', canonical: ctx.site.base_url, page: '404', body });
 }
 
 /* ------------------------------------------------------- CATEGORIES HUB */
 // All categories at a glance, grouped by shopping intent (one intent per top category),
-// each with visual subcategory cards and real counts.
+// each with visual subcategory cards.
 export function hubPage(ctx) {
   const { root, site, tree, collections, nav, products } = ctx;
   const c = (slug) => `${root}categorias/${slug}/`;
   const nSubs = tree.reduce((a, t) => a + t.children.length, 0);
-  const cc = (cat, extra = {}) => ({ href: c(cat.slug), name: cat.name, count: nav[cat.slug].count, thumb: nav[cat.slug].thumb, ...extra });
+  const cc = (cat, extra = {}) => ({ href: c(cat.slug), name: cat.name, thumb: nav[cat.slug].thumb, ...extra });
   const section = (t, i) => {
     const n = nav[t.slug];
     return `<section class="hub__sec reveal" aria-labelledby="hub-${t.slug}">
       <div class="hub__head">
         <a class="hub__cover" href="${c(t.slug)}" tabindex="-1" aria-hidden="true">${n.mosaic[0] ? `<img src="${img(root, n.mosaic[0].images[0].key, 480)}" alt="" width="480" height="672" ${i ? 'loading="lazy" ' : ''}decoding="async">` : ''}</a>
         <div class="hub__intro">
-          ${t.intent ? `<p class="eyebrow">${esc(t.intent)}</p>` : ''}
           <h2 class="hub__title" id="hub-${t.slug}"><a href="${c(t.slug)}">${esc(t.name)}</a></h2>
-          <p class="hub__meta">${n.count.toLocaleString('es-AR')} productos${t.children.length ? ` · ${t.children.length} subcategorías` : ''}${n.min ? ` · desde ${money(n.min)}` : ''}</p>
           ${n.description ? `<p class="hub__desc">${esc(n.description)}</p>` : ''}
           <a class="btn btn--ghost btn--sm" href="${c(t.slug)}">Ver todo ${icon('arrowRight')}</a>
         </div>
@@ -542,19 +515,14 @@ export function hubPage(ctx) {
     ${crumbs([{ name: 'Inicio', href: root }, { name: 'Categorías' }])}
     <p class="eyebrow">Tienda</p>
     <h1 class="cathead__title">Todas las categorías</h1>
-    <p class="cathead__desc">${tree.length} categorías, ${nSubs} subcategorías y ${collections.length} colecciones para encontrar rápido lo que buscás.</p>
-    <ul class="cathead__stats">
-      <li><strong>${products.length.toLocaleString('es-AR')}</strong> productos</li>
-      ${ctx.saleCountAll ? `<li><a href="${root}productos/?oferta=1"><strong>${ctx.saleCountAll}</strong> en oferta</a></li>` : ''}
-      <li>${site.installments_no_interest} cuotas sin interés</li>
-    </ul>
-    <nav class="hub__jump" aria-label="Ir a">${tree.map((t) => `<a class="chip" href="#hub-${t.slug}">${esc(t.name)} <span class="chip__count">${nav[t.slug].count}</span></a>`).join('')}<a class="chip" href="#hub-colecciones">Colecciones <span class="chip__count">${collections.length}</span></a></nav>
+    <p class="cathead__desc">Todo La Pelpa!, en un solo lugar.</p>
+    <nav class="hub__jump" aria-label="Ir a">${tree.map((t) => `<a class="chip" href="#hub-${t.slug}">${esc(t.name)}</a>`).join('')}<a class="chip" href="#hub-colecciones">Colecciones</a></nav>
   </div>
 </section>
 <div class="container hub">
   ${tree.map(section).join('')}
   <section class="hub__sec reveal" aria-labelledby="hub-colecciones">
-    <div class="hub__intro hub__intro--solo"><p class="eyebrow">Selecciones de La Pelpa!</p><h2 class="hub__title" id="hub-colecciones">Colecciones</h2><p class="hub__meta">${collections.length} colecciones</p></div>
+    <div class="hub__intro hub__intro--solo"><p class="eyebrow">Curadas por La Pelpa!</p><h2 class="hub__title" id="hub-colecciones">Colecciones</h2></div>
     ${catRail(ctx, collections.map((s) => cc(s)), { label: 'Colecciones', grid: true })}
   </section>
 </div>`;

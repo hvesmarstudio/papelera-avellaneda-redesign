@@ -16,10 +16,8 @@ export async function initCatalog() {
   const scopeType = host.dataset.scopeType;
   const scope = host.dataset.scope;
   const grid = host.querySelector('[data-grid]');
-  const countEl = document.querySelectorAll('[data-count]');
   const moreWrap = host.querySelector('[data-more]');
   const moreBtn = host.querySelector('[data-more-btn]');
-  const moreText = host.querySelector('[data-more-text]');
   const moreBar = host.querySelector('[data-more-bar]');
   const empty = host.querySelector('[data-empty]');
   const active = host.querySelector('[data-active]');
@@ -117,7 +115,6 @@ export async function initCatalog() {
   function render({ append = false } = {}) {
     list = compute();
     const n = list.length;
-    countEl.forEach((el) => (el.textContent = `${n.toLocaleString('es-AR')} ${n === 1 ? 'producto' : 'productos'}`));
     if (title) title.textContent = state.q ? `Resultados para “${state.q}”` : defaultTitle;
     const from = append ? grid.children.length : 0;
     const slice = list.slice(from, state.shown);
@@ -126,7 +123,6 @@ export async function initCatalog() {
     empty.hidden = n > 0;
     const shown = Math.min(state.shown, n);
     moreWrap.hidden = n === 0;
-    moreText.textContent = `Mostrando ${shown.toLocaleString('es-AR')} de ${n.toLocaleString('es-AR')}`;
     moreBar.style.width = n ? `${(shown / n) * 100}%` : '0';
     moreBtn.hidden = shown >= n;
     chips();
