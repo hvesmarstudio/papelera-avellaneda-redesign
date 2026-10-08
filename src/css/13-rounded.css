@@ -1,0 +1,64 @@
+/* ==========================================================================
+   Round 4 — rounded, card-based info blocks (no square hairline grids) and the
+   real low-stock nudge. Uses the radius tokens only.
+   ========================================================================== */
+
+/* ---------- Home trust strip → individual soft cards ---------- */
+.trust { border-block: 0; background: transparent; padding-block: var(--sp-5) var(--sp-2); }
+.trust__list { gap: var(--sp-3); }
+@media (min-width: 1024px) { .trust { padding-block: var(--sp-6) var(--sp-3); } .trust__list { gap: var(--sp-4); } }
+.trust__item,
+.trust__item + .trust__item,
+.trust__item:nth-child(odd),
+.trust__item:nth-child(-n+2) { border: 0; }
+.trust__item { gap: .85rem; padding: var(--sp-5) var(--sp-4); border-radius: var(--radius-lg); background: var(--c-surface); box-shadow: 0 1px 0 rgba(29, 26, 23, .03), 0 8px 24px -18px rgba(29, 26, 23, .18); }
+@media (min-width: 1024px) { .trust__item { padding: var(--sp-5); align-items: center; } }
+.trust__icon { width: 44px; height: 44px; background: var(--c-paper); }
+@media (max-width: 1023px) { .trust__item { flex-direction: column; gap: .7rem; } }
+
+/* ---------- Accordions (home FAQ, FAQ page, product details) → rounded cards ---------- */
+.acc { border-top: 0; display: grid; gap: .5rem; }
+.acc__item { border-bottom: 0; border-radius: var(--radius); background: var(--c-surface); padding-inline: 1.25rem; transition: background var(--dur-2) var(--ease); }
+.acc__btn { min-height: 60px; }
+.acc__content { padding-bottom: 1.25rem; }
+.section--surface .acc__item { background: var(--c-paper); }
+
+/* ---------- Product page assurances → one soft rounded panel, icons in circles ---------- */
+.assurances { border-top: 0; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-lg); background: var(--c-surface); gap: 0; }
+.assurances li { align-items: center; padding: .55rem 0; }
+.assurances__icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--c-paper); color: var(--c-accent); }
+.assurances__icon svg { width: 18px; height: 18px; margin: 0; color: inherit; }
+
+/* ---------- Footer: rounded top, info blocks as soft panels, no hairlines ---------- */
+.site-footer { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+@media (min-width: 768px) { .site-footer { border-radius: var(--radius-xl) var(--radius-xl) 0 0; } }
+.footer__col--card { padding: var(--sp-5); border-radius: var(--radius-lg); background: rgba(255, 255, 255, .05); align-self: start; }
+.footer__pay { border-top: 0; padding: var(--sp-4) var(--sp-5); border-radius: var(--radius-lg); background: rgba(255, 255, 255, .05); }
+.footer__bottom { border-top: 0; }
+.footer__concept { border-radius: var(--radius-lg); }
+.paymark { border-radius: var(--radius-pill); padding: 0 .8rem; }
+
+/* ---------- Policy pages: text sections as rounded cards ---------- */
+.prose--cards { max-width: none; display: grid; gap: var(--sp-3); }
+.prose-card { padding: clamp(1.25rem, .9rem + 1.6vw, 2.25rem); border-radius: var(--radius-lg); background: var(--c-surface); }
+.prose-card > :first-child { margin-top: 0; }
+.prose-card > :last-child { margin-bottom: 0; }
+.prose-card > * { max-width: 70ch; }
+
+/* ---------- Low stock: badge on cards + line on the product page ---------- */
+/* Warm honey tone (not alarm red), same pill/uppercase system as the sale badge */
+.badge--low { background: #f3e6cf; color: #6b4d1d; gap: .4em; }
+.badge--low::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #b98a3e; flex: none; }
+.card__badges { right: .6rem; }
+.stock.is-low { color: #6b4d1d; font-weight: 600; }
+.stock.is-low::before { background: #c08a35; box-shadow: 0 0 0 4px #f3e6cf; animation: low-pulse 2.4s var(--ease) infinite; }
+@keyframes low-pulse { 0%, 100% { box-shadow: 0 0 0 4px #f3e6cf; } 50% { box-shadow: 0 0 0 7px rgba(243, 230, 207, .55); } }
+@media (prefers-reduced-motion: reduce) { .stock.is-low::before { animation: none; } }
+
+/* ---------- Fix: long middle breadcrumbs (e.g. "Cuadernos, anotadores y…") overflowed
+   the product buybox on mobile. Middle crumbs may shrink and ellipsize. ---------- */
+.buybox, .buybox > * { min-width: 0; }
+.crumbs-nav { max-width: 100%; }
+.crumbs > li:not(:first-child):not(.crumbs__last) { flex: 0 1 auto; }
+.crumbs > li > a { min-width: 0; }
+.crumbs > li:not(:first-child) > a { display: block; line-height: 36px; overflow: hidden; text-overflow: ellipsis; }

@@ -43,6 +43,7 @@ export async function initCatalog() {
     max: params.get('max') ? Number(params.get('max')) : null,
     stock: params.get('stock') === '1',
     sale: params.get('oferta') === '1',
+    low: params.get('ultimas') === '1',
     sort: params.get('orden') || 'destacados',
     shown: PAGE,
   };
@@ -59,10 +60,11 @@ export async function initCatalog() {
     if (mx) mx.value = state.max ?? '';
     const st = filters.querySelector('input[name="stock"]'); if (st) st.checked = state.stock;
     const sa = filters.querySelector('input[name="sale"]'); if (sa) sa.checked = state.sale;
+    const lo = filters.querySelector('input[name="low"]'); if (lo) lo.checked = state.low;
     if (sortSel) sortSel.value = state.sort;
     filters.querySelectorAll('[data-preset]').forEach((b) => b.classList.toggle('is-active', String(state.min ?? '') === (b.dataset.min || '') && String(state.max ?? '') === (b.dataset.max || '')));
     // Active-filter badge on the Filtrar button
-    const nActive = state.sub.length + (state.min != null || state.max != null ? 1 : 0) + (state.stock ? 1 : 0) + (state.sale ? 1 : 0);
+    const nActive = state.sub.length + (state.min != null || state.max != null ? 1 : 0) + (state.stock ? 1 : 0) + (state.sale ? 1 : 0) + (state.low ? 1 : 0);
     document.querySelectorAll('[data-filter-badge]').forEach((el) => { el.hidden = !nActive; el.textContent = nActive; });
   }
 
@@ -73,6 +75,7 @@ export async function initCatalog() {
     if (state.max != null) list = list.filter((p) => p.p <= state.max);
     if (state.stock) list = list.filter((p) => p.a);
     if (state.sale) list = list.filter((p) => p.c && p.c > p.p);
+    if (state.low) list = list.filter((p) => p.a && p.l);
     const by = {
       'precio-asc': (a, b) => a.p - b.p,
       'precio-desc': (a, b) => b.p - a.p,
@@ -92,6 +95,7 @@ export async function initCatalog() {
     if (state.max != null) p.set('max', state.max);
     if (state.stock) p.set('stock', '1');
     if (state.sale) p.set('oferta', '1');
+    if (state.low) p.set('ultimas', '1');
     if (state.sort !== 'destacados') p.set('orden', state.sort);
     const s = p.toString();
     history.replaceState(null, '', s ? `?${s}` : location.pathname);
@@ -105,6 +109,7 @@ export async function initCatalog() {
     if (state.min != null || state.max != null) c.push(['price', `${state.min != null ? money(state.min) : '$0'} – ${state.max != null ? money(state.max) : 'más'}`]);
     if (state.stock) c.push(['stock', 'Con stock']);
     if (state.sale) c.push(['sale', 'En oferta']);
+    if (state.low) c.push(['low', 'Últimas unidades']);
     active.innerHTML = c.map(([k, l]) => `<button type="button" class="chip" data-chip="${k}" aria-label="Quitar filtro ${l.replace(/<[^>]+>/g, '')}">${l} ${icon('close')}</button>`).join('') + (c.length > 1 ? '<button type="button" class="chip chip--clear" data-chip="all">Limpiar todo</button>' : '');
   }
 
@@ -139,6 +144,7 @@ export async function initCatalog() {
     if (t.name === 'sub') state.sub = [...filters.querySelectorAll('input[name="sub"]:checked')].map((i) => i.value);
     if (t.name === 'stock') state.stock = t.checked;
     if (t.name === 'sale') state.sale = t.checked;
+    if (t.name === 'low') state.low = t.checked;
     if (t.name === 'min' || t.name === 'max') {
       const v = t.value === '' ? null : Math.max(0, Number(t.value));
       state[t.name] = isNaN(v) ? null : v;
@@ -158,12 +164,13 @@ export async function initCatalog() {
     const b = e.target.closest('[data-chip]');
     if (!b) return;
     const k = b.dataset.chip;
-    if (k === 'all') { state.q = ''; state.sub = []; state.min = state.max = null; state.stock = state.sale = false; }
+    if (k === 'all') { state.q = ''; state.sub = []; state.min = state.max = null; state.stock = state.sale = state.low = false; }
     else if (k === 'q') state.q = '';
     else if (k.startsWith('sub:')) state.sub = state.sub.filter((s) => s !== k.slice(4));
     else if (k === 'price') state.min = state.max = null;
     else if (k === 'stock') state.stock = false;
     else if (k === 'sale') state.sale = false;
+    else if (k === 'low') state.low = false;
     update();
   });
   moreBtn.addEventListener('click', () => {
@@ -171,7 +178,7 @@ export async function initCatalog() {
     state.shown += PAGE; render({ append: true });
     grid.children[before]?.querySelector('a')?.focus({ preventScroll: true });
   });
-  document.querySelectorAll('[data-reset-filters]').forEach((b) => b.addEventListener('click', () => { state.q = ''; state.sub = []; state.min = state.max = null; state.stock = state.sale = false; update(); }));
+  document.querySelectorAll('[data-reset-filters]').forEach((b) => b.addEventListener('click', () => { state.q = ''; state.sub = []; state.min = state.max = null; state.stock = state.sale = state.low = false; update(); }));
 
   // Initial: pre-rendered markup matches the default state; re-render only if needed
   if (hadParams) render(); else { list = compute(); syncControls(); }

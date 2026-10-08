@@ -1,9 +1,11 @@
 // Entry point
+import { initFresh } from './fresh.js';
 import { initAnnouncements, initReveal, initAccordions, initCardHover, openLayer, toast } from './ui.js';
 import { initCart, addToCart } from './cart-drawer.js';
 import { initSearch } from './search.js';
 import { initNav } from './nav.js';
 
+initFresh();
 document.documentElement.classList.remove('no-js');
 initNav();
 initAnnouncements();

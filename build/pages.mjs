@@ -193,6 +193,7 @@ export function catalog(ctx, scope) {
     <fieldset class="filters__group" style="border:0;margin:0;padding-inline:0"><legend class="filters__title">Disponibilidad</legend>
       <label class="check"><input type="checkbox" name="stock"> Solo con stock</label>
       ${saleCount ? `<label class="check"><input type="checkbox" name="sale"> En oferta</label>` : ''}
+      ${scope.items.some(ctx.isLow) ? `<label class="check"><input type="checkbox" name="low"> Últimas unidades</label>` : ''}
     </fieldset>
     <div class="filters__group"><p class="filters__title">Categorías</p>${tree2}</div>
   </div>`;
@@ -323,7 +324,7 @@ export function product(ctx, p) {
         <p class="buybox__inst">${icon('card')}<span><strong>${site.installments_no_interest} cuotas sin interés</strong> de <span data-installments>${installment(v0.price, site.installments_no_interest)}</span></span></p>
       </div>
       ${options}
-      <p class="stock" data-stock role="status">${p.available ? 'En stock, listo para salir' : 'Sin stock'}</p>
+      ${(() => { const low = v0.available && typeof v0.stock === 'number' && v0.stock > 0 && v0.stock <= ctx.LOW; return `<p class="stock${low ? ' is-low' : p.available ? '' : ' is-out'}" data-stock role="status">${low ? '¡Quedan pocas! Llevalo antes de que vuele.' : p.available ? 'En stock, listo para salir' : 'Sin stock'}</p>`; })()}
       <div class="buybox__actions">
         <div class="qty" role="group" aria-label="Cantidad">
           <button type="button" data-qty-dec aria-label="Restar uno">${icon('minus')}</button>
@@ -334,10 +335,10 @@ export function product(ctx, p) {
         <a class="btn btn--wa" href="https://wa.me/${site.contact.whatsapp}?text=${waMsg}" target="_blank" rel="noopener">${icon('whatsapp')}Consultar por WhatsApp</a>
       </div>
       <ul class="assurances">
-        <li>${icon('truck')}<span><strong>Envíos a todo el país</strong> por Correo Argentino, o moto en CABA.</span></li>
-        <li>${icon('store')}<span><strong>Retiro en el local</strong> · ${esc(site.contact.address)}, CABA.</span></li>
-        <li>${icon('returns')}<span><strong>${site.returns_days} días</strong> para cambios y devoluciones.</span></li>
-        <li>${icon('lock')}<span><strong>Pagos con Mercado Pago</strong>, transferencia o efectivo.</span></li>
+        <li><span class=\"assurances__icon\">${icon('truck')}</span><span><strong>Envíos a todo el país</strong> por Correo Argentino, o moto en CABA.</span></li>
+        <li><span class=\"assurances__icon\">${icon('store')}</span><span><strong>Retiro en el local</strong> · ${esc(site.contact.address)}, CABA.</span></li>
+        <li><span class=\"assurances__icon\">${icon('returns')}</span><span><strong>${site.returns_days} días</strong> para cambios y devoluciones.</span></li>
+        <li><span class=\"assurances__icon\">${icon('lock')}</span><span><strong>Pagos con Mercado Pago</strong>, transferencia o efectivo.</span></li>
       </ul>
       <div class="acc">${sections.map((s, i) => `<div class="acc__item"><h2><button type="button" class="acc__btn" data-acc aria-expanded="${s.open ? 'true' : 'false'}" aria-controls="pd-${i}">${esc(s.q)} ${icon('plus')}</button></h2><div class="acc__panel${s.open ? ' is-open' : ''}" id="pd-${i}" role="region"><div><div class="acc__content">${s.a}</div></div></div></div>`).join('')}</div>
     </div>
@@ -370,6 +371,7 @@ ${related.length ? `<section class="section section--surface" aria-labelledby="r
 
 /* --------------------------------------------------------- CONTENT PAGES */
 function contentPage(ctx, { slug, title, eyebrow, intro, html, description }) {
+  html = html.replace(/<div class="prose">([\s\S]*)<\/div>\s*$/, (_, inner) => `<div class="prose prose--cards">${proseCards(inner)}</div>`);
   const { root, site } = ctx;
   const body = `
 <div class="container container--narrow page-head">
@@ -388,6 +390,12 @@ function contentPage(ctx, { slug, title, eyebrow, intro, html, description }) {
   ${html}
 </div>`;
   return layout(ctx, { title, description: description || intro?.replace(/<[^>]+>/g, ''), canonical: `${site.base_url}${slug}/`, page: 'content', body });
+}
+
+// Policy text as soft rounded cards: one card per <h2> section (the text before the first
+// <h2> becomes the first card).
+function proseCards(inner) {
+  return inner.split(/(?=<h2[\s>])/).map((x) => x.trim()).filter(Boolean).map((x) => `<section class="prose-card">${x}</section>`).join('');
 }
 
 export function shippingPage(ctx) {

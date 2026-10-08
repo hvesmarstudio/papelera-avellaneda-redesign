@@ -3,6 +3,12 @@ import { money, installment, pct } from './format.js';
 import { addToCart } from './cart-drawer.js';
 
 const cfg = window.__SITE__ || {};
+// Low-stock line uses the selected variant's own (real) stock; never shows the number.
+// Copy must match build/pages.mjs (server-rendered first state).
+const LOW = cfg.lowStock ?? 2;
+const LOW_TEXT = '¡Quedan pocas! Llevalo antes de que vuele.';
+const IN_STOCK_TEXT = 'En stock, listo para salir';
+const isLowVariant = (v) => !!v && v.a && typeof v.s === 'number' && v.s > 0 && v.s <= LOW;
 
 export function initProduct() {
   const dataEl = document.getElementById('product-data');
@@ -80,8 +86,8 @@ export function initProduct() {
       stockEl.classList.remove('is-low', 'is-out');
       if (!v) { stockEl.textContent = 'Elegí una opción disponible'; stockEl.classList.add('is-out'); }
       else if (!available) { stockEl.textContent = 'Sin stock en esta opción'; stockEl.classList.add('is-out'); }
-      else if (v.s != null && v.s > 0 && v.s <= 3) { stockEl.textContent = `¡Últimas ${v.s} unidades!`; stockEl.classList.add('is-low'); }
-      else stockEl.textContent = 'En stock · listo para enviar';
+      else if (isLowVariant(v)) { stockEl.textContent = LOW_TEXT; stockEl.classList.add('is-low'); }
+      else stockEl.textContent = IN_STOCK_TEXT;
     }
     [atc, stickyBtn].forEach((b) => { if (!b) return; b.disabled = !available; b.querySelector('[data-atc-label]').textContent = available ? 'Agregar al carrito' : 'Sin stock'; });
   }

@@ -8,7 +8,7 @@ export function head({ ctx, title, description, canonical, image, jsonld = [], e
   const fullTitle = title ? `${title} | ${site.name} · ${site.legal_name}` : `${site.name} · ${site.legal_name} — ${site.tagline}`;
   const ogImage = image || `${site.base_url}assets/img/brand/og.jpg`;
   return `<!doctype html>
-<html lang="es-AR" class="no-js" data-root="${root}">
+<html lang="es-AR" class="no-js" data-root="${root}" data-build="${assetV.build}" data-catalog-url="${root}data/catalog.json?v=${assetV.catalog}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -31,9 +31,9 @@ export function head({ ctx, title, description, canonical, image, jsonld = [], e
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..600,0..100;1,9..144,300..600,0..100&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="${root}assets/css/site.css?v=${assetV}">
-<script>window.__SITE__=${JSON.stringify({ installments: site.installments_no_interest, whatsapp: site.contact.whatsapp, freeShippingThreshold: site.free_shipping_threshold })};</script>
-<script type="module" src="${root}assets/js/main.js?v=${assetV}"></script>
+<link rel="stylesheet" href="${root}assets/css/site.css?v=${assetV.css}">
+<script>window.__SITE__=${JSON.stringify({ installments: site.installments_no_interest, whatsapp: site.contact.whatsapp, freeShippingThreshold: site.free_shipping_threshold, lowStock: site.low_stock_threshold ?? 2 })};</script>
+<script type="module" src="${root}assets/js/main.js?v=${assetV.main}"></script>
 ${jsonld.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n')}
 ${extraHead}
 </head>`;
@@ -324,7 +324,7 @@ export function footer(ctx) {
         <li><a href="${root}terminos-y-condiciones/">Términos y condiciones</a></li>
         <li><a href="${site.original_url}contacto/?order_cancellation_without_id=true" target="_blank" rel="noopener">Botón de arrepentimiento</a></li>
       </ul></div>
-      <div class="footer__col"><h2>Contacto</h2><ul>
+      <div class="footer__col footer__col--card"><h2>Contacto</h2><ul>
         <li><a href="https://wa.me/${site.contact.whatsapp}" target="_blank" rel="noopener">${icon('whatsapp')}${esc(site.contact.whatsapp_display)}</a></li>
         <li><a href="mailto:${site.contact.email}">${icon('mail')}${esc(site.contact.email)}</a></li>
         <li><span>${icon('pin')}${esc(site.contact.address)}, CABA</span></li>

@@ -63,14 +63,14 @@ export function initSearch() {
     const data = await getCatalog();
     const nq = norm(q);
     const terms = nq.split(' ').filter(Boolean);
-    const catHits = data.categories.filter((c) => c.n > 0 && terms.every((tm) => norm(c.name).includes(tm)))
-      .sort((a, b) => (norm(b.name).startsWith(nq) - norm(a.name).startsWith(nq)) || b.n - a.n).slice(0, 4);
+    const catHits = data.categories.filter((c) => terms.every((tm) => norm(c.name).includes(tm)))
+      .sort((a, b) => (norm(b.name).startsWith(nq) - norm(a.name).startsWith(nq)) || a.r - b.r).slice(0, 4);
     const hits = rank(data.items, q);
     idle.hidden = true;
     catsWrap.hidden = !catHits.length;
     cats.innerHTML = catHits.map((c) => {
       const parent = c.parent ? data.catNames[c.parent] : (c.t ? 'Colección' : 'Categoría');
-      return `<li><a class="search-cat" href="${root}categorias/${c.slug}/"><img src="${root}assets/img/nav/${c.slug}.webp" alt="" width="56" height="56" loading="lazy"><span><span class="search-cat__name">${mark(c.name, q)}</span><span class="search-cat__n">${esc(parent)}</span></span></a></li>`;
+      return `<li><a class="search-cat" href="${root}categorias/${c.slug}/"><img src="${root}${c.i || `assets/img/nav/${c.slug}.webp`}" alt="" width="56" height="56" loading="lazy"><span><span class="search-cat__name">${mark(c.name, q)}</span><span class="search-cat__n">${esc(parent)}</span></span></a></li>`;
     }).join('');
     prodsWrap.hidden = !hits.length;
     results.innerHTML = hits.slice(0, 8).map((p) => `<li><a class="search-hit" href="${root}productos/${p.h}/">${p.m?.[0] ? `<img src="${root}assets/img/products/${p.m[0]}-480.webp" alt="" width="56" height="72" loading="lazy">` : '<span class="search-hit__ph"></span>'}<span><span class="search-hit__name">${mark(p.n, q)}</span><span class="search-hit__price">${p.x > p.p ? 'Desde ' : ''}${money(p.p)}${p.c > p.p ? ` <s>${money(p.c)}</s>` : ''}${p.a ? '' : ' · Sin stock'}</span></span></a></li>`).join('');

@@ -27,13 +27,15 @@ export function renderCard(p, o) {
   const badges = [
     !p.a ? '<span class="badge badge--soldout">Sin stock</span>' : '',
     p.a && off ? `<span class="badge badge--sale">−${off}%</span>` : '',
+    // real low stock (see build: isLow) — never shown for untracked stock, never a number
+    p.a && p.l ? '<span class="badge badge--low">Últimas unidades</span>' : '',
   ].join('');
   let quick = '';
   if (p.a && p.v) quick = `<button type="button" class="card__quick" data-quick-add="${esc(JSON.stringify({ vid: p.v, pid: p.i, h: p.h, n: p.n, vl: '', p: p.p, img: k1 || null, max: p.s ?? null }))}" aria-label="Agregar ${name} al carrito">${icon('bagPlus')}</button>`;
   else if (p.a && p.vl > 1) quick = `<a class="card__quick" href="${url}" aria-label="Elegir opciones de ${name}" tabindex="-1">${icon('arrowRight')}</a>`;
   const from = p.x && p.x > p.p ? '<span class="price__from">Desde</span>' : '';
   const inst = o.installments && p.a ? `<p class="card__inst">${o.installments} cuotas sin interés de ${installment(p.p, o.installments)}</p>` : '';
-  const opts = p.vl > 1 ? `<p class="card__swatches">${p.vl} opciones</p>` : '';
+  const opts = p.vl > 1 ? '<p class="card__swatches">Varias opciones</p>' : '';
   return `<article class="card${p.a ? '' : ' is-soldout'}${k2 ? ' has-2' : ''}">
 <div class="card__visual"><div class="card__media">${img(k1, f1, 'card__img-1', name)}${img(k2, f2, 'card__img-2', '', true)}</div>
 <div class="card__badges">${badges}</div>${quick}</div>

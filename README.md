@@ -10,7 +10,7 @@ An unofficial, concept redesign of the online store [papeleraavellaneda.com](htt
 
 ## What's inside
 
-- **The full catalog — 1,142 products** with 2,149 variants and 3,103 product photos (re-encoded to WebP at 480 px and 960 px), in 29 categories, subcategories and collections. Everything mirrors the live store: names, ARS prices, sale prices, variants (color/size/design…), stock status and descriptions.
+- **The full catalog:** every product, variant and photo from the live store (photos re-encoded to WebP at 480 px and 960 px), across all its categories, subcategories and collections. Everything mirrors the live store: names, ARS prices, sale prices, variants (color/size/design…), stock status and descriptions.
 - **Real store information only:** WhatsApp, email, address (Av. Avellaneda 2871, CABA), opening and pickup hours, shipping methods (Correo Argentino, Moto CABA, Moto Flash, store pickup), the 30-day returns policy, payment methods (Mercado Pago with 3 interest-free installments, bank transfer, cash), Instagram/Facebook, the legally required consumer-protection link and the "Botón de arrepentimiento". No reviews, ratings, testimonials or stats were invented.
 
 ## Main improvements over the current site
@@ -29,13 +29,31 @@ An unofficial, concept redesign of the online store [papeleraavellaneda.com](htt
 | Accessibility / SEO | — | Semantic HTML, skip link, focus-visible styles, focus-trapped dialogs, AA color contrast, alt text, `prefers-reduced-motion`, JSON-LD (Store, Product, BreadcrumbList), OG/Twitter tags, canonical URLs |
 | Performance | — | Static HTML, WebP images with `srcset`/lazy loading, hover images fetched only on hover, ~60 KB gzipped catalog index, no frameworks |
 
-## Information architecture (category UX for 1,142 products)
+## Information architecture (category UX)
 
 - **One clear entry per need, from the real tree.** The store's four top categories (Deco y fiesta, Bolsas y embalaje, Todo para la mesa, Navidad) lead everywhere, and the six collections sit beside them as curated entry points. No categories were invented or merged.
 - **Biggest first.** Top categories and subcategories are ordered by how many products they hold (real counts), so the deepest assortments lead. The mobile sub-panels show the six largest subcategories, then "Ver todas las subcategorías". Empty categories are hidden automatically.
 - **Calm by design.** There are no product counts or stat pills anywhere in the UI. Counts are used only behind the scenes, to order categories and to hide empty ones.
 - **Several ways in.** Search can be the main path: matching categories come first, then products. Visual browsing works through the hub, rails and mega menu. Quick chips cover Ofertas and Todos los productos. Inside a parent category, subcategory chips filter in place without a page load, and the breadcrumb switches to a sibling in one tap.
 - **Only real copy.** Category descriptions are used only where the store wrote one (Navidad). "Ideas para empezar" in search are the largest real subcategories, not invented popularity data. The copy is short, warm Argentine Spanish; shipping, pickup, payment and policy facts are unchanged.
+
+## Low-stock nudge ("Últimas unidades")
+
+Urgency comes from real stock, never from invented claims or visible numbers.
+
+- **Source:** per-variant `stock` in `data/products.json`, a snapshot taken from the live store on 7/10/2026. `null` means the store doesn't track stock for that variant.
+- **Card badge:** a product gets "Últimas unidades" when every in-stock variant has tracked stock and their total is at or below `low_stock_threshold` in `data/site.json` (currently **2**). With this snapshot that's about 17% of in-stock products. A threshold of 3 would badge about 25%, which is too many to stay meaningful.
+- **Product page:** the stock line follows the *selected variant's* own stock. At or below the threshold it reads "¡Quedan pocas! Llevalo antes de que vuele." with a warm dot. No exact numbers are shown.
+- **Never badged:** untracked (`null`) stock and sold-out products ("Sin stock" works as before).
+- **Filter:** "Últimas unidades" sits inside Filtrar (Disponibilidad) and only appears where some product qualifies (`?ultimas=1`).
+- **On Tiendanube** this becomes live. `product.stock` is `null` when stock isn't tracked, the same as our rule, so the card badge goes in `snipplets/labels.tpl` as `{% if product.stock is not null and product.stock > 0 and product.stock <= threshold %}`. For the product page, base-theme already ships a "last product" pattern you can extend from `== 1` to `<= threshold`: `settings.last_product` and `product.selected_or_first_available_variant.stock` in `snipplets/product/product-quantity.tpl`, and `variant.stock` in the variant-change handler in `static/js/store.js.tpl`.
+
+## Caching and fresh loads
+
+GitHub Pages serves every file with `Cache-Control: max-age=600`, and the headers can't be changed. There is no service worker.
+
+- **Assets:** every asset URL carries a content hash, so a deploy never mixes old and new files. That covers CSS (`site.css?v=…`), every JS module (per-module hash that includes its imports), `data/catalog.json` (`<html data-catalog-url>`), and the brand and nav images. Product images use immutable keys derived from their source URL.
+- **HTML:** each page carries `<html data-build>`. `src/js/fresh.js` fetches `version.json` with `cache: 'no-store'` on load, on back/forward-cache restores and when the tab becomes visible again. If a newer build exists, it reloads once through `?_v=<build>`, which also skips the CDN and browser caches, then removes the param.
 
 ## Project structure
 
@@ -83,7 +101,7 @@ Each component lines up with a template or snipplet in Tiendanube's official [ba
 | "Ver más" pagination | `snipplets/grid/pagination.tpl` (`{% paginate %}`, infinite scroll option) | Back-button restoration has to be added to the theme JS |
 | Categories hub (`hubPage()`) | No dedicated template | Build it as a custom `templates/page.tpl` variant or a home section that loops over the global `categories`. **Custom work** |
 | Home category carousel (`home()`) | `snipplets/home/home-modules.tpl` / a custom home section looping over `categories` | Card images come from category images in the admin. Scroll-snap and arrows are CSS plus a little JS |
-| `renderCard()` (`src/js/card.js`) | `snipplets/grid/item.tpl`, `product_grid.tpl`, `grid/quick-shop.tpl`, `labels.tpl` | Images via `product_image_url('medium'/'large')` + lazyload. Quick add maps to the base theme's quick shop |
+| `renderCard()` (`src/js/card.js`) | `snipplets/grid/item.tpl`, `product_grid.tpl`, `grid/quick-shop.tpl`, `labels.tpl` (the "Últimas unidades" badge goes in `labels.tpl`, driven by `product.stock`) | Images via `product_image_url('medium'/'large')` + lazyload. Quick add maps to the base theme's quick shop |
 | `product()` page | `templates/product.tpl` + `snipplets/product/product-image.tpl`, `product-form.tpl`, `product-variants.tpl`, `product-quantity.tpl`, `product-payment-details.tpl`, `product-related.tpl` | Variant pills = `settings.bullet_variants` (`js-insta-variant`). Live price and stock come from `product.variants_object` (the same `data-variants` JSON we scraped) |
 | Cart drawer (`cartDrawer()`, `cart-drawer.js`, `store.js`) | `snipplets/cart-panel.tpl`, `cart-item-ajax.tpl`, `cart-totals.tpl`, `notification-cart.tpl`, `templates/cart.tpl` | AJAX cart panel is native; swap our localStorage store for the theme's cart endpoints. The free-shipping bar is native (`shipping/shipping-free-rest.tpl`) and appears only if the store sets a minimum |
 | Checkout demo modal | Native checkout | Remove it; "Iniciar compra" posts to the real checkout |
@@ -96,6 +114,7 @@ Each component lines up with a template or snipplet in Tiendanube's official [ba
 **Gotchas**
 - The design no longer shows product counts, so the theme doesn't need them. The menu and home carousel only need category images.
 - Category thumbnails need images uploaded per category in the admin.
+- Low stock: the snapshot here is static. On Tiendanube, `product.stock` / `variant.stock` make the badge and the "¡Quedan pocas!" line live (see Low-stock nudge).
 - Product images come in Tiendanube's fixed sizes (`small` to `1080p`), not our own 480/960 WebP set.
 
 ## Run locally

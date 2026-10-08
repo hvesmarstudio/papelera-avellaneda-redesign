@@ -57,6 +57,16 @@ for (const slug of Object.keys(catBySlug)) {
 }
 const saleCountAll = products.filter((p) => p.compare_at_price > p.price).length; // matches the ?oferta=1 filter
 
+// Low-stock nudge (real snapshot data): a product counts as "Últimas unidades" when every
+// in-stock variant has tracked stock and their total is at or below the threshold.
+// Untracked (null) stock never gets the badge. On Tiendanube this maps to variant.stock.
+const LOW = site.low_stock_threshold ?? 2;
+function isLow(p) {
+  const vs = p.variants.filter((v) => v.available);
+  if (!p.available || !vs.length || vs.some((v) => typeof v.stock !== 'number')) return false;
+  const total = vs.reduce((a, v) => a + v.stock, 0);
+  return total > 0 && total <= LOW;
+}
 const fit = (im) => { const r = im.h / im.w; return r >= 1.2 && r <= 1.62 ? 'v' : 'c'; };
 function record(p) {
   const single = p.variants.length === 1 ? p.variants[0] : null;
@@ -64,7 +74,7 @@ function record(p) {
     i: p.id, h: p.handle, n: p.display_name, p: p.price, x: p.price_max !== p.price ? p.price_max : undefined,
     c: p.compare_at_price || undefined, a: p.available ? 1 : 0, k: p.categories,
     m: p.images.slice(0, 2).map((i) => i.key), f: p.images.slice(0, 2).map(fit).join(''),
-    v: single && single.available ? single.id : 0, vl: p.variants.length, s: single ? single.stock : undefined, r: p.rank,
+    v: single && single.available ? single.id : 0, vl: p.variants.length, s: single ? single.stock : undefined, r: p.rank, l: isLow(p) ? 1 : undefined,
   };
 }
 const order = [...tree.flatMap((t) => [...t.children.map((c) => c.slug), t.slug]), ...collections.map((c) => c.slug)];
@@ -87,39 +97,65 @@ function related(p, n) {
   return [...out.slice(start), ...out.slice(0, start)].slice(0, n);
 }
 
-// Assets
+// Assets — every URL carries a content hash (?v=…), so a new deploy never mixes
+// stale and fresh files. HTML itself can't be versioned on GitHub Pages (max-age=600),
+// so pages also carry data-build and main.js checks /version.json (see fresh.js).
 fs.rmSync(DIST, { recursive: true, force: true });
 fs.mkdirSync(DIST, { recursive: true });
+const md5 = (...parts) => { const h = crypto.createHash('md5'); parts.forEach((x) => h.update(x)); return h.digest('hex').slice(0, 10); };
 const cssFiles = fs.readdirSync(path.join(ROOT, 'src/css')).filter((f) => f.endsWith('.css')).sort();
 const css = cssFiles.map((f) => `/* ${f} */\n` + fs.readFileSync(path.join(ROOT, 'src/css', f), 'utf8')).join('\n');
-const jsDir = path.join(ROOT, 'src/js');
-const hash = crypto.createHash('md5').update(css);
-fs.readdirSync(jsDir).sort().forEach((f) => hash.update(fs.readFileSync(path.join(jsDir, f))));
-const assetV = hash.digest('hex').slice(0, 8);
 fs.mkdirSync(path.join(DIST, 'assets/css'), { recursive: true });
 fs.writeFileSync(path.join(DIST, 'assets/css/site.css'), css);
-fs.cpSync(jsDir, path.join(DIST, 'assets/js'), { recursive: true });
+const cssV = md5(css);
+// JS: per-module hash = own source + hashes of the modules it imports (so a change in a
+// dependency re-versions every importer up to main.js).
+const jsDir = path.join(ROOT, 'src/js');
+const jsSrc = Object.fromEntries(fs.readdirSync(jsDir).filter((f) => f.endsWith('.js')).map((f) => [f, fs.readFileSync(path.join(jsDir, f), 'utf8')]));
+const IMPORT_RE = /(from '|import\(')\.\/([\w-]+\.js)'/g;
+const jsV = {};
+const jsHash = (f, seen = new Set()) => {
+  if (jsV[f]) return jsV[f];
+  if (seen.has(f)) return md5(jsSrc[f]); // cycle guard
+  seen.add(f);
+  const deps = [...jsSrc[f].matchAll(IMPORT_RE)].map((m) => m[2]).sort();
+  return (jsV[f] = md5(jsSrc[f], ...deps.map((d) => jsHash(d, seen))));
+};
+Object.keys(jsSrc).forEach((f) => jsHash(f));
+fs.mkdirSync(path.join(DIST, 'assets/js'), { recursive: true });
+for (const [f, src] of Object.entries(jsSrc)) fs.writeFileSync(path.join(DIST, 'assets/js', f), src.replace(IMPORT_RE, (_, pre, dep) => `${pre}./${dep}?v=${jsV[dep]}'`));
 fs.cpSync(path.join(ROOT, 'assets/img'), path.join(DIST, 'assets/img'), { recursive: true });
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
-// Cache-bust module imports inside JS (relative imports carry the version too)
-for (const f of fs.readdirSync(path.join(DIST, 'assets/js'))) {
-  const p = path.join(DIST, 'assets/js', f);
-  fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/from '(\.\/[\w-]+\.js)'/g, `from '$1?v=${assetV}'`).replace(/import\('(\.\/[\w-]+\.js)'\)/g, `import('$1?v=${assetV}')`));
-}
+// Static images (brand, nav thumbnails) get a per-file hash; product images already use
+// immutable keys derived from their source URL.
+const imgV = {};
+const imgHash = (rel) => (imgV[rel] ??= fs.existsSync(path.join(ROOT, rel)) ? md5(fs.readFileSync(path.join(ROOT, rel))) : null);
+const versionImgs = (html) => html.replace(/(assets\/img\/(?:brand|nav)\/[\w.-]+\.(?:webp|png|jpe?g|svg|ico))(?![?\w])/g, (m) => (imgHash(m) ? `${m}?v=${imgHash(m)}` : m));
 
 // Client catalog
 const subsOf = Object.fromEntries([...tree.map((t) => [t.slug, t.children.map((c) => c.slug)]), ['', tree.map((t) => t.slug)]]);
+// Categories ship with a size rank (r: 0 = largest) for ordering suggestions — no counts.
+const allCats = [...tree.flatMap((t) => [t, ...t.children]), ...collections];
+const sizeRank = Object.fromEntries(allCats.slice().sort(byCount).map((c, i) => [c.slug, i]));
 const catalogJson = {
-  categories: [...tree.flatMap((t) => [t, ...t.children]), ...collections].map((c) => ({ slug: c.slug, name: c.name, parent: c.parent || null, n: c.count, t: !!collections.find((x) => x.slug === c.slug) })),
+  categories: allCats.map((c) => ({ r: sizeRank[c.slug], slug: c.slug, name: c.name, parent: c.parent || null, t: !!collections.find((x) => x.slug === c.slug), i: versionImgs(`assets/img/nav/${c.slug}.webp`) })),
   tops: tree.map((t) => t.slug), subsOf,
   items: products.map(record),
 };
 fs.mkdirSync(path.join(DIST, 'data'), { recursive: true });
-fs.writeFileSync(path.join(DIST, 'data/catalog.json'), JSON.stringify(catalogJson));
+const catalogStr = JSON.stringify(catalogJson);
+fs.writeFileSync(path.join(DIST, 'data/catalog.json'), catalogStr);
+const catalogV = md5(catalogStr);
+// Build id: hash of every input (data, templates, sources, images list, base URL).
+const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
+const inputs = [...walk(path.join(ROOT, 'data')), ...walk(path.join(ROOT, 'build')), ...walk(path.join(ROOT, 'src'))].sort();
+const buildV = md5(site.base_url, ...inputs.map((f) => fs.readFileSync(f)), String(fs.readdirSync(path.join(ROOT, 'assets/img/products')).length));
+fs.writeFileSync(path.join(DIST, 'version.json'), JSON.stringify({ v: buildV }));
 
 // Pages
-const baseCtx = { site, products, tree, collections, catBySlug, byHandle, record, fit, primaryCat, related, assetV, nav, saleCountAll };
-const write = (rel, html) => { const p = path.join(DIST, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, html); };
+const assetV = { css: cssV, main: jsV['main.js'], catalog: catalogV, build: buildV };
+const baseCtx = { site, products, tree, collections, catBySlug, byHandle, record, fit, primaryCat, related, assetV, nav, saleCountAll, isLow, LOW };
+const write = (rel, html) => { const p = path.join(DIST, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, rel.endsWith('.html') ? versionImgs(html) : html); };
 const ctxAt = (depth) => {
   const root = depth === 'abs' ? new URL(site.base_url).pathname : '../'.repeat(depth);
   return { ...baseCtx, root, abs: (href) => site.base_url + String(href).replace(/^(\.\.\/)+/, '').replace(new RegExp('^' + new URL(site.base_url).pathname), '') };
@@ -143,4 +179,5 @@ write('404.html', notFound(ctxAt('abs')));
 const urls = ['', 'productos/', 'categorias/', ...Object.keys(catBySlug).map((s) => `categorias/${s}/`), ...products.map((p) => `productos/${p.handle}/`), 'envios-y-devoluciones/', 'preguntas-frecuentes/', 'contacto/', 'terminos-y-condiciones/'];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${site.base_url}${u}</loc></url>`).join('')}</urlset>`);
 write('robots.txt', 'User-agent: *\nDisallow: /\n');
-console.log(`Built ${products.length} products, ${Object.keys(catBySlug).length} category pages → dist/ (v${assetV})`);
+const lowN = products.filter(isLow).length, inStock = products.filter((p) => p.available).length;
+console.log(`Built ${products.length} products, ${Object.keys(catBySlug).length} category pages → dist/ (build ${buildV}, css ${cssV}, main ${jsV['main.js']}, catalog ${catalogV}) · low-stock ≤${LOW}: ${lowN}/${inStock} in stock (${(lowN / inStock * 100).toFixed(1)}%)`);

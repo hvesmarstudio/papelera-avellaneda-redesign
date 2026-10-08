@@ -142,5 +142,6 @@
     "todo-para-la-mesa": "Para poner la mesa",
     "bolsas-y-embalaje": "Para envolver y regalar",
     "navidad": "De temporada"
-  }
+  },
+  "low_stock_threshold": 2
 }
