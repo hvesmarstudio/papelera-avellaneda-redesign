@@ -198,10 +198,6 @@ export function catalog(ctx, scope) {
   </div>`;
 
   const title = scope.type === 'all' ? 'Todo La Pelpa!' : scope.name;
-  const avail = items.filter((p) => p.available);
-  const minP = avail.length ? Math.min(...avail.map((p) => p.price)) : null;
-  const saleN = saleCount;
-  const kicker = scope.type === 'all' ? 'Tienda' : scope.type === 'collection' ? 'Colección' : parent ? parent.name : 'Categoría';
   // Only real copy: the store's own category text when it exists, otherwise a factual line
   const desc = nav[scope.slug]?.description ? esc(nav[scope.slug].description) : '';
   const mosaic = scope.type === 'all' ? tree.slice(0, 3).map((t) => nav[t.slug].mosaic[0]).filter(Boolean) : nav[scope.slug].mosaic;
@@ -216,7 +212,6 @@ export function catalog(ctx, scope) {
     ${crumbs(crumbItems)}
     <div class="cathead__grid${mosaic.length ? '' : ' cathead__grid--solo'}">
       <div class="cathead__copy">
-        <p class="eyebrow">${esc(kicker)}</p>
         <div class="cathead__titlerow">
           <h1 class="cathead__title" data-page-title>${esc(title)}</h1>
           ${mosaic[0] ? `<span class="cathead__thumb" aria-hidden="true"><img src="${root}${scope.type === 'all' ? `assets/img/nav/${tree[0].slug}.webp` : nav[scope.slug].thumb}" alt="" width="120" height="120"></span>` : ''}
@@ -241,12 +236,6 @@ export function catalog(ctx, scope) {
           <option value="az">Nombre A–Z</option>
           <option value="za">Nombre Z–A</option>
         </select>${icon('chevronDown')}</label>
-        ${scope.children?.length
-          // Parent category: in-place subcategory filter chips with counts (sticky on mobile)
-          ? `<span class="toolbar__div" aria-hidden="true"></span><span class="toolbar__subs" role="group" aria-label="Filtrar por subcategoría">${scope.children.map((s) => `<button type="button" class="tchip tchip--sub" data-sub-chip="${s.slug}" aria-pressed="false">${esc(s.name)}</button>`).join('')}</span>`
-          : `${saleCount ? `<button type="button" class="tchip tchip--quick" data-quick="sale" aria-pressed="false">${icon('sparkle')}En oferta</button>` : ''}
-        <button type="button" class="tchip tchip--quick" data-quick="stock" aria-pressed="false">Con stock</button>
-        <button type="button" class="tchip tchip--quick" data-quick="p5000" aria-pressed="false">Hasta $5.000</button>`}
       </div>
     </div>
     <div class="active-filters" data-active></div>
